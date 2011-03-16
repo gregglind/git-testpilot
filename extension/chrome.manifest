@@ -18,3 +18,6 @@ overlay chrome://testpilot/content/all-studies-window.xul chrome://browser/conte
 component {e6e5e58f-7977-485a-b076-2f74bee2677b} components/TestPilot.js
 contract @mozilla.org/testpilot/service;1 {e6e5e58f-7977-485a-b076-2f74bee2677b}
 category profile-after-change testpilot @mozilla.org/testpilot/service;1
+
+# For the options on Fennec
+override chrome://testpilot/content/options.xul chrome://testpilot/content/fennec-options.xul application={a23983c0-fd0e-11dc-95ff-0800200c9a66}

@@ -42,7 +42,7 @@ var TestPilotMenuUtils;
   var Cu = Components.utils;
   var Ci = Components.interfaces;
 
-  Cu.import("resource://testpilot/modules/setup.js");
+  //Cu.import("resource://testpilot/modules/setup.js");
 
   TestPilotMenuUtils = {
     updateSubmenu: function() {
@@ -148,14 +148,14 @@ var TestPilotMenuUtils;
   var TestPilotWindowHandlers = {
     onWindowLoad: function() {
       // Customize the interface of the newly opened window.
-      Cu.import("resource://testpilot/modules/interface.js");
-      TestPilotUIBuilder.buildCorrectInterface(window);
+      /*Cu.import("resource://testpilot/modules/interface.js");
+      TestPilotUIBuilder.buildCorrectInterface(window);*/
 
       /* "Hold" window load events for TestPilotSetup, passing them along only
        * after startup is complete.  It's hacky, but the benefit is that
        * TestPilotSetup.onWindowLoad can treat all windows the same no matter
        * whether they opened with Firefox on startup or were opened later. */
-      if (TestPilotSetup && TestPilotSetup.startupComplete) {
+      /*if (TestPilotSetup && TestPilotSetup.startupComplete) {
         TestPilotSetup.onWindowLoad(window);
       } else {
         let observerSvc = Cc["@mozilla.org/observer-service;1"]
@@ -167,7 +167,8 @@ var TestPilotMenuUtils;
           }
         };
         observerSvc.addObserver(observer, "testpilot:startup:complete", false);
-      }
+      }*/
+      Services.console.logStringMessage("Test Pilot Saw A Window Open\n");
     },
 
     onWindowUnload: function() {
