@@ -146,18 +146,41 @@ var TestPilotMenuUtils;
 
 
   var TestPilotWindowHandlers = {
+    initialized: false,
     onWindowLoad: function() {
+      try {
       // Customize the interface of the newly opened window.
-      /*Cu.import("resource://testpilot/modules/interface.js");
-      TestPilotUIBuilder.buildCorrectInterface(window);*/
+      Cu.import("resource://testpilot/modules/interface.js");
+      Services.console.logStringMessage("Interface module loaded.\n");
+      /*TestPilotUIBuilder.buildCorrectInterface(window);*/
 
       /* "Hold" window load events for TestPilotSetup, passing them along only
        * after startup is complete.  It's hacky, but the benefit is that
        * TestPilotSetup.onWindowLoad can treat all windows the same no matter
        * whether they opened with Firefox on startup or were opened later. */
-      /*if (TestPilotSetup && TestPilotSetup.startupComplete) {
+
+      if (("TestPilotSetup" in window) && TestPilotSetup.startupComplete) {
+        Services.console.logStringMessage("Startup complete, that's funny.\n");
         TestPilotSetup.onWindowLoad(window);
       } else {
+        Services.console.logStringMessage("Initializing timer.\n");
+        // TODO only want to start this timer ONCE so we need some global state to
+        // remember whether we already started it (only a problem on multi-window systems)
+        // (that's essentially the problem the component solved) deal with this later.
+        window.setTimeout(function() {
+           Services.console.logStringMessage("Timer got called back!.\n");
+           try {
+             Services.console.logStringMessage("Impoting setup");
+             Cu.import("resource://testpilot/modules/setup.js");
+             Services.console.logStringMessage("globally globalStartuping");
+             TestPilotSetup.globalStartup();
+             Services.console.logStringMessage("Did it.");
+           } catch (e) {
+             Services.console.logStringMessage(e);
+           }
+        }, 10000);
+        Services.console.logStringMessage("Timer made.\n");
+
         let observerSvc = Cc["@mozilla.org/observer-service;1"]
                              .getService(Ci.nsIObserverService);
         let observer = {
@@ -166,9 +189,27 @@ var TestPilotMenuUtils;
             TestPilotSetup.onWindowLoad(window);
           }
         };
+        Services.console.logStringMessage("Registering observer for startup completion.\n");
         observerSvc.addObserver(observer, "testpilot:startup:complete", false);
-      }*/
+      }
+
+      /*
       Services.console.logStringMessage("Test Pilot Saw A Window Open\n");
+      let alerts = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
+      alerts.showAlertNotification("drawable://alertaddons", "Test Pilot Is GO!",
+     "I come from the future to annoy you with dialog boxes", true, "",
+                                   { observe: function(aSubject, aTopic, data) {
+                                       if (aTopic == "alertclickcallback") {
+                                         // here's where we would want to show the study code
+                                         Services.console.logStringMessage("You clicked TP notification");
+                                       }
+                                     }}
+                                   , "pony-dialog");*/
+
+      /**/
+      } catch (e) {
+        Services.console.logStringMessage(e.toString());
+      }
     },
 
     onWindowUnload: function() {

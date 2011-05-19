@@ -189,7 +189,7 @@ let TestPilotSetup = {
   _isFfx4BetaVersion: function TPS__isFfx4BetaVersion() {
     /* Return true if we're in the beta channel -- this will determine whether we show the
      * Feedback interface or the Test Pilot interface.
-     * TODO this is duplicated in interface.js, maybe call that instead.
+     * TODO call the one in interface.js instead
      */
     let channel = this._prefs.getValue(UPDATE_CHANNEL_PREF, "default");
     return (channel == "beta") || (channel == "betatest");
@@ -198,6 +198,7 @@ let TestPilotSetup = {
   _setPrefDefaultsForVersion: function TPS__setPrefDefaultsForVersion() {
     /* A couple of preferences need different default values depending on
      * whether we're in the Firefox 4 beta version or the standalone TP version
+     * TODO move this to interface.js.
      */
     let ps = Cc["@mozilla.org/preferences-service;1"]
                     .getService(Ci.nsIPrefService);

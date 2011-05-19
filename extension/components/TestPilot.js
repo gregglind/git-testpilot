@@ -57,9 +57,11 @@ TestPilotComponent.prototype = {
         getService(Ci.nsIObserverService);
     switch (topic) {
     case "profile-after-change":
+      Services.console.logStringMessage("Test Pilot Component Sessionstore\n");
       os.addObserver(this, "sessionstore-windows-restored", true);
       break;
     case "sessionstore-windows-restored":
+      Services.console.logStringMessage("Test Pilot Component Restored\n");
       /* Stop oberver, to ensure that globalStartup doesn't get
        * called more than once. */
       os.removeObserver(this, "sessionstore-windows-restored", false);
