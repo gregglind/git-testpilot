@@ -69,17 +69,11 @@ let TestPilotSetup = {
   version: "",
 
   // Lazy initializers:
-  __application: null,
-  get _application() {
-    if (this.__application == null) {
-      this.__application = Cc["@mozilla.org/fuel/application;1"]
-                             .getService(Ci.fuelIApplication);
-    }
-    return this.__application;
-  },
-
+  __prefs: null,
   get _prefs() {
-    return this._application.prefs;
+    this.__prefs = Cc["@mozilla.org/preferences-service;1"]
+      .getService(Ci.nsIPrefBranch);
+    return this.__prefs;
   },
 
   __loader: null,
@@ -191,7 +185,7 @@ let TestPilotSetup = {
      * Feedback interface or the Test Pilot interface.
      * TODO call the one in interface.js instead
      */
-    let channel = this._prefs.getValue(UPDATE_CHANNEL_PREF, "default");
+    let channel = this._prefs.getCharPref(UPDATE_CHANNEL_PREF);
     return (channel == "beta") || (channel == "betatest");
   },
 
@@ -222,7 +216,7 @@ let TestPilotSetup = {
 
     try {
     this._setPrefDefaultsForVersion();
-    if (!this._prefs.getValue(RUN_AT_ALL_PREF, true)) {
+    if (!this._prefs.getBoolPref(RUN_AT_ALL_PREF)) {
       logger.trace("Test Pilot globally disabled: Not starting up.");
       return;
     }
@@ -245,7 +239,7 @@ let TestPilotSetup = {
     this._shortTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
     this._shortTimer.initWithCallback(
       { notify: function(timer) { self._doHousekeeping();} },
-      this._prefs.getValue(POPUP_CHECK_INTERVAL, 180000),
+      this._prefs.getIntPref(POPUP_CHECK_INTERVAL),
       Ci.nsITimer.TYPE_REPEATING_SLACK
     );
     this._longTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -254,19 +248,24 @@ let TestPilotSetup = {
           self.reloadRemoteExperiments(function() {
             self._notifyUserOfTasks();
 	  });
-      }}, this._prefs.getValue(POPUP_REMINDER_INTERVAL, 86400000),
+      }}, this._prefs.getIntPref(POPUP_REMINDER_INTERVAL),
       Ci.nsITimer.TYPE_REPEATING_SLACK);
 
       this.getVersion(function() {
       // Show first run page (in front window) if newly installed or upgraded.
-        let currVersion = self._prefs.getValue(VERSION_PREF, "firstrun");
+        let currVersion;
+        if (self._prefs.prefHasUserValue(VERSION_PREF) {
+          currVersion = self._prefs.getCharPref(VERSION_PREF);
+        } else {
+          currVersion = "";
+        }
 
         if (currVersion != self.version) {
           if(!self._isFfx4BetaVersion()) {
             // Don't show first run page in ffx4 beta version.
-            self._prefs.setValue(VERSION_PREF, self.version);
+            self._prefs.setCharPref(VERSION_PREF, self.version);
             let browser = self._getFrontBrowserWindow().getBrowser();
-            let url = self._prefs.getValue(FIRST_RUN_PREF, "");
+            let url = self._prefs.getCharPref(FIRST_RUN_PREF);
             let tab = browser.addTab(url);
             browser.selectedTab = tab;
           }
@@ -438,7 +437,7 @@ let TestPilotSetup = {
         submitBtn.onclick = function() {
           self._hideNotification(window, onCloseCallback);
           if (showAlwaysSubmitCheckbox && alwaysSubmitCheckbox.checked) {
-            self._prefs.setValue(ALWAYS_SUBMIT_DATA, true);
+            self._prefs.setBoolPref(ALWAYS_SUBMIT_DATA, true);
           }
           task.upload( function(success) {
             if (success) {
@@ -528,11 +527,11 @@ let TestPilotSetup = {
     }
 
     // Highest priority is if there is a finished test (needs a decision)
-    if (this._prefs.getValue(POPUP_SHOW_ON_FINISH, false)) {
+    if (this._prefs.getBoolPref(POPUP_SHOW_ON_FINISH)) {
       for (i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
         if (task.status == TaskConstants.STATUS_FINISHED) {
-          if (!this._prefs.getValue(ALWAYS_SUBMIT_DATA, false)) {
+          if (!this._prefs.getBoolPref(ALWAYS_SUBMIT_DATA)) {
             this._showNotification(
 	      task, false,
 	      this._stringBundle.formatStringFromName(
@@ -553,7 +552,7 @@ let TestPilotSetup = {
 
     // If there's no finished test, next highest priority is new tests that
     // are starting...
-    if (this._prefs.getValue(POPUP_SHOW_ON_NEW, false)) {
+    if (this._prefs.getBoolPref(POPUP_SHOW_ON_NEW)) {
       for (i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
         if (task.status == TaskConstants.STATUS_PENDING ||
@@ -594,7 +593,7 @@ let TestPilotSetup = {
     }
 
     // And finally, new experiment results:
-    if (this._prefs.getValue(POPUP_SHOW_ON_RESULTS, false)) {
+    if (this._prefs.getBoolPref(POPUP_SHOW_ON_RESULTS)) {
       for (i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
         if (task.taskType == TaskConstants.TYPE_RESULTS &&
@@ -653,14 +652,18 @@ let TestPilotSetup = {
     // Application.extensions undefined in Firefox 4; will use the new
     // asynchrounous API, store string in this.version, and call the
     // callback when done.
-    if (this._application.extensions) {
-      this.version = this._application.extensions.get(EXTENSION_ID).version;
-      callback();
-    } else {
-      let self = this;
-      self._application.getExtensions(function(extensions) {
-        self.version = extensions.get(EXTENSION_ID).version;
+    let self = this;
+    if (self.version != "") {
+      if (callback) {
         callback();
+      }
+    } else {
+      Cu.import("resource://gre/modules/AddonManager.jsm");
+      AddonManager.getAddonByID(EXTENSION_ID, function(addon) {
+        self.version = addon.version;
+        if (callback) {
+          callback();
+        }
       });
     }
   },
@@ -677,9 +680,11 @@ let TestPilotSetup = {
   },
 
   _isNewerThanFirefox: function TPS__isNewerThanFirefox(versionString) {
+    let appVersion = Cc["@mozilla.org/xre/app-info;1"]
+                       .getService(Ci.nsIXULAppInfo).version;
     let result = Cc["@mozilla.org/xpcom/version-comparator;1"]
                    .getService(Ci.nsIVersionComparator)
-                   .compare(this._application.version, versionString);
+                   .compare(appVersion, versionString);
     if (result < 0) {
       return true; // versionString is newer than Firefox
     } else {
@@ -743,16 +748,17 @@ let TestPilotSetup = {
          * using random subsample deployment will provide a range (say, 0 ~ 30) which means
          * only users who roll within that range will run the study. */
         let prefName = RANDOM_DEPLOY_PREFIX + "." + randomDeployment.rolloutCode;
-        let myRoll = this._prefs.getValue(prefName, null);
-        if (myRoll == null) {
-          myRoll = Math.floor(Math.random()*100);
-          this._prefs.setValue(prefName, myRoll);
-        }
-        if (myRoll < randomDeployment.minRoll) {
-          return false;
-        }
-        if (myRoll > randomDeployment.maxRoll) {
-          return false;
+        if (!this._prefs.prefHasUserValue(prefName)) {
+          let myRoll = Math.floor(Math.random()*100);
+          this._prefs.setIntPref(prefName, myRoll);
+        } else {
+          let myRoll = this._prefs.getIntPref(prefName);
+          if (myRoll < randomDeployment.minRoll) {
+            return false;
+          }
+          if (myRoll > randomDeployment.maxRoll) {
+            return false;
+          }
         }
       }
 
