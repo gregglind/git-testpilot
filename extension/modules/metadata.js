@@ -88,21 +88,14 @@ let MetadataCollector = {
   getExtensions: function MetadataCollector_getExtensions(callback) {
     //http://lxr.mozilla.org/aviarybranch/source/toolkit/mozapps/extensions/public/nsIExtensionManager.idl
     //http://lxr.mozilla.org/aviarybranch/source/toolkit/mozapps/update/public/nsIUpdateService.idl#45
-    let myExtensions = [];
-    // TODO REPLACE THIS FUNCTION WITH ONE NOT USING Application.
-    if (Application.extensions) {
-      for each (let ex in Application.extensions.all) {
+    //resource://gre/modules/AddonManager.jsm
+    Cu.import("resource://gre/modules/AddonManager.jsm");
+    AddonManager.getAllAddons(function(extensions) {
+      for each (let ex in extensions.all) {
         myExtensions.push({ id: Weave_sha1(ex.id), isEnabled: ex.enabled });
       }
       callback(myExtensions);
-    } else {
-      Application.getExtensions(function(extensions) {
-        for each (let ex in extensions.all) {
-          myExtensions.push({ id: Weave_sha1(ex.id), isEnabled: ex.enabled });
-        }
-        callback(myExtensions);
-      });
-    }
+    });
   },
 
   getAccessibilities : function MetadataCollector_getAccessibilities() {

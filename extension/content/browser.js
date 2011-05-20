@@ -176,15 +176,11 @@ var TestPilotMenuUtils;
         // (that's essentially the problem the component solved) deal with this later.
         window.setTimeout(function() {
            Services.console.logStringMessage("Timer got called back!.\n");
-           try {
              Services.console.logStringMessage("Impoting setup");
              Cu.import("resource://testpilot/modules/setup.js");
              Services.console.logStringMessage("globally globalStartuping");
              TestPilotSetup.globalStartup();
              Services.console.logStringMessage("Did it.");
-           } catch (e) {
-             Services.console.logStringMessage(e);
-           }
         }, 10000);
         Services.console.logStringMessage("Timer made.\n");
 

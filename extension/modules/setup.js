@@ -253,11 +253,9 @@ let TestPilotSetup = {
 
       this.getVersion(function() {
       // Show first run page (in front window) if newly installed or upgraded.
-        let currVersion;
-        if (self._prefs.prefHasUserValue(VERSION_PREF) {
+        let currVersion = "";
+        if (self._prefs.prefHasUserValue(VERSION_PREF)) {
           currVersion = self._prefs.getCharPref(VERSION_PREF);
-        } else {
-          currVersion = "";
         }
 
         if (currVersion != self.version) {
