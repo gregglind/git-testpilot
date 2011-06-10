@@ -196,20 +196,6 @@ var TestPilotMenuUtils;
         observerSvc.addObserver(observer, "testpilot:startup:complete", false);
       }
 
-      /*
-      Services.console.logStringMessage("Test Pilot Saw A Window Open\n");
-      let alerts = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
-      alerts.showAlertNotification("drawable://alertaddons", "Test Pilot Is GO!",
-     "I come from the future to annoy you with dialog boxes", true, "",
-                                   { observe: function(aSubject, aTopic, data) {
-                                       if (aTopic == "alertclickcallback") {
-                                         // here's where we would want to show the study code
-                                         Services.console.logStringMessage("You clicked TP notification");
-                                       }
-                                     }}
-                                   , "pony-dialog");*/
-
-      /**/
       } catch (e) {
         Services.console.logStringMessage(e.toString());
       }

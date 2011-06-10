@@ -77,6 +77,12 @@ var TestPilotUIBuilder = {
       .getService(Ci.nsIXULAppInfo).version;
   },
 
+  get _appID() {
+    delete this._appID;
+    return this.__appID = Cc["@mozilla.org/xre/app-info;1"]
+      .getService(Ci.nsIXULAppInfo).ID;
+  },
+
   buildTestPilotInterface: function(window) {
     // Don't need Feedback button: remove it
     let feedbackButton = window.document.getElementById("feedback-menu-button");
@@ -188,6 +194,11 @@ var TestPilotUIBuilder = {
   getNotificationManager: function() {
     let ntfnModule = {};
     Cu.import("resource://testpilot/modules/notifications.js", ntfnModule);
+
+    // If we're on Android, use the Android notification manager!
+    if (this._appID == "{a23983c0-fd0e-11dc-95ff-0800200c9a66}") {
+      return new ntfnModule.AndroidNotificationManager();
+    }
 
     // Use custom notifications anchored to the Feedback button, if there is a Feedback button
     if (this.channelUsesFeedback()) {

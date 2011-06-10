@@ -40,11 +40,47 @@
      hideNotification: function(window) {}
  */
 
-EXPORTED_SYMBOLS = ["CustomNotificationManager", "PopupNotificationManager"];
+EXPORTED_SYMBOLS = ["CustomNotificationManager", "PopupNotificationManager",
+                    "AndroidNotificationManager"];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
+
+function AndroidNotificationManager() {
+  // See https://developer.mozilla.org/en/XPCOM_Interface_Reference/nsIAlertsService
+  Services.console.logStringMessage("Android Notfn Manager Instantiated.");
+  this._alerts = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
+}
+AndroidNotificationmanager.prototype = {
+  showNotification: function TP_AndroidNotfn_showNotification(window, options) {
+    /* Submit, SeeAllStudies, alwaysSubmit, and Cancel options not implemented.
+     * fragile and iconClass are ignored.  Clicking the notification always activates
+     * the moreInfo option (e.g. opens the More Info page.)
+     */
+    Services.console.logStringMessage("Showing Android Notfn: " + options.text);
+
+    this._alerts.showAlertNotification("drawable://alertaddons",
+                                       options.title,
+                                       options.text,
+                                       true, // link is clickable
+                                       "", // no cookie
+                                       { observe: function(aSubject, aTopic, data) {
+                                           if (aTopic == "alertclickcallback") {
+                                             if (options.moreInfoLabel) {
+                                               options.moreInfoCallback();
+                                             }
+                                             Services.console.logStringMessage("Notfn clicked.");
+                                           }
+                                         }
+                                       },
+                                       "test-pilot-notification");
+  },
+
+  hideNotification: function TP_AndroidNotfn_showNotification(window) {
+  }
+};
+
 
 /* CustomNotificationManager: the one where notifications
  * come up from the Test Pilot icon in the addon bar.  For Firefox 3.6. */
