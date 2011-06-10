@@ -105,10 +105,9 @@ var TestPilotWindowUtils;
     },
 
     openHomepage: function() {
-      let Application = Cc["@mozilla.org/fuel/application;1"]
-                          .getService(Ci.fuelIApplication);
-      let url = Application.prefs.getValue("extensions.testpilot.homepageURL",
-                                           "");
+      let prefs = Cc["@mozilla.org/preferences-service;1"]
+        .getService(Ci.nsIPrefBranch);
+      let url = prefs.getCharPref("extensions.testpilot.homepageURL");
       this.openInTab(url);
     },
 

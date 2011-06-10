@@ -54,9 +54,6 @@ const UPDATE_CHANNEL_PREF = "app.update.channel";
  * with any upload.*/
 const SURVEY_ANS = "extensions.testpilot.surveyAnswers.basic_panel_survey_2";
 
-let Application = Cc["@mozilla.org/fuel/application;1"]
-                  .getService(Ci.fuelIApplication);
-
 // This function copied over from Weave:
 function Weave_sha1(string) {
   let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
@@ -80,24 +77,26 @@ function Weave_sha1(string) {
 }
 
 let MetadataCollector = {
+
+  __prefs: null,
+  get _prefs() {
+    this.__prefs = Cc["@mozilla.org/preferences-service;1"]
+      .getService(Ci.nsIPrefBranch);
+    return this.__prefs;
+  },
+
   // Collects metadata such as what country you're in, what extensions you have installed, etc.
   getExtensions: function MetadataCollector_getExtensions(callback) {
     //http://lxr.mozilla.org/aviarybranch/source/toolkit/mozapps/extensions/public/nsIExtensionManager.idl
     //http://lxr.mozilla.org/aviarybranch/source/toolkit/mozapps/update/public/nsIUpdateService.idl#45
-    let myExtensions = [];
-    if (Application.extensions) {
-      for each (let ex in Application.extensions.all) {
+    //resource://gre/modules/AddonManager.jsm
+    Cu.import("resource://gre/modules/AddonManager.jsm");
+    AddonManager.getAllAddons(function(extensions) {
+      for each (let ex in extensions.all) {
         myExtensions.push({ id: Weave_sha1(ex.id), isEnabled: ex.enabled });
       }
       callback(myExtensions);
-    } else {
-      Application.getExtensions(function(extensions) {
-        for each (let ex in extensions.all) {
-          myExtensions.push({ id: Weave_sha1(ex.id), isEnabled: ex.enabled });
-        }
-        callback(myExtensions);
-      });
-    }
+    });
   },
 
   getAccessibilities : function MetadataCollector_getAccessibilities() {
@@ -112,8 +111,7 @@ let MetadataCollector = {
 
     for (let i = 0; i < length; i++) {
       prefName = "accessibility." + children[i];
-      prefValue =
-        Application.prefs.getValue(prefName, "");
+      prefValue = branch.getValue(children[i]);
       accessibilities.push({ name: prefName, value: prefValue });
     }
 
@@ -136,11 +134,12 @@ let MetadataCollector = {
   getLocation: function MetadataCollector_getLocation() {
     // we don't want the lat/long, we just want the country
     // so use the Locale.
-    return Application.prefs.getValue(LOCALE_PREF, "");
+    return this._prefs.getCharPref(LOCALE_PREF);
   },
 
   getVersion: function MetadataCollector_getVersion() {
-    return Application.version;
+    return Cc["@mozilla.org/xre/app-info;1"]
+      .getService(Ci.nsIXULAppInfo).version;
   },
 
   getOperatingSystem: function MetadataCollector_getOSVersion() {
@@ -150,23 +149,19 @@ let MetadataCollector = {
   },
 
   getSurveyAnswers: function MetadataCollector_getSurveyAnswers() {
-    let answers = Application.prefs.getValue(SURVEY_ANS, "");
-    if (answers == "") {
-      return "";
-    } else {
+    if (this._prefs.prefHasUserValue(SURVEY_ANS)) {
+      let answers = this._prefs.getCharPref(SURVEY_ANS);
       return sanitizeJSONStrings( JSON.parse(answers) );
+    } else {
+      return "";
     }
   },
 
   getTestPilotVersion: function MetadataCollector_getTPVersion(callback) {
-    // Application.extensions is undefined if we're in Firefox 4.
-    if (Application.extensions) {
-      callback(Application.extensions.get(EXTENSION_ID).version);
-    } else {
-      Application.getExtensions(function(extensions) {
-        callback(extensions.get(EXTENSION_ID).version);
-      });
-    }
+    Cu.import("resource://gre/modules/AddonManager.jsm");
+    AddonManager.getAddonByID(EXTENSION_ID, function(addon) {
+      callback(addon.version);
+    });
   },
 
   getUpdateChannel: function MetadataCollector_getUpdateChannel() {

@@ -42,9 +42,16 @@ var TestPilotMenuUtils;
   var Cu = Components.utils;
   var Ci = Components.interfaces;
 
-  Cu.import("resource://testpilot/modules/setup.js");
+  //Cu.import("resource://testpilot/modules/setup.js");
 
   TestPilotMenuUtils = {
+    __prefs: null,
+    get _prefs() {
+      this.__prefs = Cc["@mozilla.org/preferences-service;1"]
+        .getService(Ci.nsIPrefBranch);
+      return this.__prefs;
+    },
+
     updateSubmenu: function() {
       let ntfyMenuFinished =
         document.getElementById("pilot-menu-notify-finished");
@@ -52,22 +59,23 @@ var TestPilotMenuUtils;
       let ntfyMenuResults = document.getElementById("pilot-menu-notify-results");
       let alwaysSubmitData =
         document.getElementById("pilot-menu-always-submit-data");
-      let Application = Cc["@mozilla.org/fuel/application;1"]
-                      .getService(Ci.fuelIApplication);
-      ntfyMenuFinished.setAttribute("checked", Application.prefs.getValue(
-                                    POPUP_SHOW_ON_FINISH, false));
-      ntfyMenuNew.setAttribute("checked", Application.prefs.getValue(
-                                POPUP_SHOW_ON_NEW, false));
-      ntfyMenuResults.setAttribute("checked", Application.prefs.getValue(
-                                    POPUP_SHOW_ON_RESULTS, false));
-      alwaysSubmitData.setAttribute("checked", Application.prefs.getValue(
-                                     ALWAYS_SUBMIT_DATA, false));
+      ntfyMenuFinished.setAttribute("checked",
+                                    this._prefs.getCharPref(POPUP_SHOW_ON_FINISH));
+      ntfyMenuNew.setAttribute("checked",
+                                 this._prefs.getCharPref(POPUP_SHOW_ON_NEW));
+      ntfyMenuResults.setAttribute("checked",
+                                   this._prefs.getCharPref(POPUP_SHOW_ON_RESULTS));
+      alwaysSubmitData.setAttribute("checked",
+                                    this._prefs.getCharPref(ALWAYS_SUBMIT_DATA));
     },
 
     togglePref: function(id) {
       let prefName = "extensions.testpilot." + id;
-      let oldVal = Application.prefs.getValue(prefName, false);
-      Application.prefs.setValue( prefName, !oldVal);
+      let oldVal = false;
+      if (this._prefs.prefHasUserValue(prefName)) {
+        oldVal = this._prefs.getBoolPref(prefName);
+      }
+      this._prefs.setBoolPref(prefName, !oldVal);
 
       // If you turn on or off the global pref, startup or shutdown test pilot
       // accordingly:
@@ -100,8 +108,7 @@ var TestPilotMenuUtils;
       // for the current status...
       let runStudiesToggle = document.getElementById("feedback-menu-enable-studies");
       if (runStudiesToggle) {
-        let currSetting = Application.prefs.getValue("extensions.testpilot.runStudies",
-                                                     true);
+        let currSetting = this._prefs.getBoolPref(RUN_AT_ALL_PREF);
 
         let stringBundle = Cc["@mozilla.org/intl/stringbundle;1"].
           getService(Ci.nsIStringBundleService).
@@ -118,7 +125,7 @@ var TestPilotMenuUtils;
 
       let studiesMenuItem = document.getElementById("feedback-menu-show-studies");
       studiesMenuItem.setAttribute("disabled",
-                                   !Application.prefs.getValue(RUN_AT_ALL_PREF, true));
+                                   !this._prefs.getBoolPref(RUN_AT_ALL_PREF));
     },
 
     onMenuButtonMouseDown: function(attachPointId) {
@@ -146,18 +153,37 @@ var TestPilotMenuUtils;
 
 
   var TestPilotWindowHandlers = {
+    initialized: false,
     onWindowLoad: function() {
+      try {
       // Customize the interface of the newly opened window.
       Cu.import("resource://testpilot/modules/interface.js");
-      TestPilotUIBuilder.buildCorrectInterface(window);
+      Services.console.logStringMessage("Interface module loaded.\n");
+      /*TestPilotUIBuilder.buildCorrectInterface(window);*/
 
       /* "Hold" window load events for TestPilotSetup, passing them along only
        * after startup is complete.  It's hacky, but the benefit is that
        * TestPilotSetup.onWindowLoad can treat all windows the same no matter
        * whether they opened with Firefox on startup or were opened later. */
-      if (TestPilotSetup && TestPilotSetup.startupComplete) {
+
+      if (("TestPilotSetup" in window) && TestPilotSetup.startupComplete) {
+        Services.console.logStringMessage("Startup complete, that's funny.\n");
         TestPilotSetup.onWindowLoad(window);
       } else {
+        Services.console.logStringMessage("Initializing timer.\n");
+        // TODO only want to start this timer ONCE so we need some global state to
+        // remember whether we already started it (only a problem on multi-window systems)
+        // (that's essentially the problem the component solved) deal with this later.
+        window.setTimeout(function() {
+           Services.console.logStringMessage("Timer got called back!.\n");
+             Services.console.logStringMessage("Impoting setup");
+             Cu.import("resource://testpilot/modules/setup.js");
+             Services.console.logStringMessage("globally globalStartuping");
+             TestPilotSetup.globalStartup();
+             Services.console.logStringMessage("Did it.");
+        }, 10000);
+        Services.console.logStringMessage("Timer made.\n");
+
         let observerSvc = Cc["@mozilla.org/observer-service;1"]
                              .getService(Ci.nsIObserverService);
         let observer = {
@@ -166,7 +192,26 @@ var TestPilotMenuUtils;
             TestPilotSetup.onWindowLoad(window);
           }
         };
+        Services.console.logStringMessage("Registering observer for startup completion.\n");
         observerSvc.addObserver(observer, "testpilot:startup:complete", false);
+      }
+
+      /*
+      Services.console.logStringMessage("Test Pilot Saw A Window Open\n");
+      let alerts = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
+      alerts.showAlertNotification("drawable://alertaddons", "Test Pilot Is GO!",
+     "I come from the future to annoy you with dialog boxes", true, "",
+                                   { observe: function(aSubject, aTopic, data) {
+                                       if (aTopic == "alertclickcallback") {
+                                         // here's where we would want to show the study code
+                                         Services.console.logStringMessage("You clicked TP notification");
+                                       }
+                                     }}
+                                   , "pony-dialog");*/
+
+      /**/
+      } catch (e) {
+        Services.console.logStringMessage(e.toString());
       }
     },
 

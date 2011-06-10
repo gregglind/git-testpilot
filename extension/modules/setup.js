@@ -71,17 +71,11 @@ let TestPilotSetup = {
   version: "",
 
   // Lazy initializers:
-  __application: null,
-  get _application() {
-    if (this.__application == null) {
-      this.__application = Cc["@mozilla.org/fuel/application;1"]
-                             .getService(Ci.fuelIApplication);
-    }
-    return this.__application;
-  },
-
+  __prefs: null,
   get _prefs() {
-    return this._application.prefs;
+    this.__prefs = Cc["@mozilla.org/preferences-service;1"]
+      .getService(Ci.nsIPrefBranch);
+    return this.__prefs;
   },
 
   __loader: null,
@@ -177,10 +171,38 @@ let TestPilotSetup = {
     return this.__obs;
   },
 
+<<<<<<< local
+  _isFfx4BetaVersion: function TPS__isFfx4BetaVersion() {
+    /* Return true if we're in the beta channel -- this will determine whether we show the
+     * Feedback interface or the Test Pilot interface.
+     * TODO call the one in interface.js instead
+     */
+    let channel = this._prefs.getCharPref(UPDATE_CHANNEL_PREF);
+    return (channel == "beta") || (channel == "betatest");
+  },
+
+  _setPrefDefaultsForVersion: function TPS__setPrefDefaultsForVersion() {
+    /* A couple of preferences need different default values depending on
+     * whether we're in the Firefox 4 beta version or the standalone TP version
+     * TODO move this to interface.js.
+     */
+    let ps = Cc["@mozilla.org/preferences-service;1"]
+                    .getService(Ci.nsIPrefService);
+    let prefBranch = ps.getDefaultBranch("");
+    /* note we're setting default values, not current values -- these
+     * get overridden by any user set values. */
+    if (this._isFfx4BetaVersion()) {
+      prefBranch.setBoolPref(POPUP_SHOW_ON_NEW, true);
+      prefBranch.setIntPref(POPUP_CHECK_INTERVAL, 600000);
+    } else {
+      prefBranch.setBoolPref(POPUP_SHOW_ON_NEW, false);
+      prefBranch.setIntPref(POPUP_CHECK_INTERVAL, 180000);
+=======
   __notifier: null,
   get _notifier() {
     if (this.__notifier == null) {
       this.__notifier = TestPilotUIBuilder.getNotificationManager();
+>>>>>>> other
     }
     return this.__notifier;
   },
@@ -192,7 +214,12 @@ let TestPilotSetup = {
     logger.trace("TestPilotSetup.globalStartup was called.");
 
     try {
+<<<<<<< local
+    this._setPrefDefaultsForVersion();
+    if (!this._prefs.getBoolPref(RUN_AT_ALL_PREF)) {
+=======
     if (!this._prefs.getValue(RUN_AT_ALL_PREF, true)) {
+>>>>>>> other
       logger.trace("Test Pilot globally disabled: Not starting up.");
       return;
     }
@@ -215,7 +242,7 @@ let TestPilotSetup = {
     this._shortTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
     this._shortTimer.initWithCallback(
       { notify: function(timer) { self._doHousekeeping();} },
-      this._prefs.getValue(POPUP_CHECK_INTERVAL, 180000),
+      this._prefs.getIntPref(POPUP_CHECK_INTERVAL),
       Ci.nsITimer.TYPE_REPEATING_SLACK
     );
     this._longTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -224,17 +251,30 @@ let TestPilotSetup = {
           self.reloadRemoteExperiments(function() {
             self._notifyUserOfTasks();
 	  });
-      }}, this._prefs.getValue(POPUP_REMINDER_INTERVAL, 86400000),
+      }}, this._prefs.getIntPref(POPUP_REMINDER_INTERVAL),
       Ci.nsITimer.TYPE_REPEATING_SLACK);
 
       this.getVersion(function() {
+<<<<<<< local
+      // Show first run page (in front window) if newly installed or upgraded.
+        let currVersion = "";
+        if (self._prefs.prefHasUserValue(VERSION_PREF)) {
+          currVersion = self._prefs.getCharPref(VERSION_PREF);
+        }
+
+        if (currVersion != self.version) {
+          if(!self._isFfx4BetaVersion()) {
+            // Don't show first run page in ffx4 beta version.
+            self._prefs.setCharPref(VERSION_PREF, self.version);
+=======
         /* Show first run page (in front window) only the first time after install;
          * Don't show first run page in Feedback UI version. */
         if ((self._prefs.getValue(VERSION_PREF, "") == "") &&
            (!TestPilotUIBuilder.channelUsesFeedback())) {
             self._prefs.setValue(VERSION_PREF, self.version);
+>>>>>>> other
             let browser = self._getFrontBrowserWindow().getBrowser();
-            let url = self._prefs.getValue(FIRST_RUN_PREF, "");
+            let url = self._prefs.getCharPref(FIRST_RUN_PREF);
             let tab = browser.addTab(url);
             browser.selectedTab = tab;
         }
@@ -336,6 +376,129 @@ let TestPilotSetup = {
     this.taskList.push(testPilotTask);
   },
 
+<<<<<<< local
+  _showNotification: function TPS__showNotification(task, fragile, text, title,
+                                                    iconClass, showSubmit,
+						    showAlwaysSubmitCheckbox,
+                                                    linkText, linkUrl,
+						    isExtensionUpdate,
+                                                    onCloseCallback) {
+    /* TODO: Refactor the arguments of this function, it's getting really
+     * unweildly.... maybe pass in an object, or even make a notification an
+     * object that you create and then call .show() on. */
+
+    // If there are multiple windows, show notifications in the frontmost
+    // window.
+    let window = this._getFrontBrowserWindow();
+    let doc = window.document;
+    let popup = doc.getElementById("pilot-notification-popup");
+
+    let anchor;
+    if (this._isFfx4BetaVersion()) {
+      /* If we're in the Ffx4Beta version, popups come down from feedback
+       * button, but if we're in the standalone extension version, they
+       * come up from status bar icon. */
+      anchor = doc.getElementById("feedback-menu-button");
+      popup.setAttribute("class", "tail-up");
+    } else {
+      anchor = doc.getElementById("pilot-notifications-button");
+      popup.setAttribute("class", "tail-down");
+    }
+    let textLabel = doc.getElementById("pilot-notification-text");
+    let titleLabel = doc.getElementById("pilot-notification-title");
+    let icon = doc.getElementById("pilot-notification-icon");
+    let submitBtn = doc.getElementById("pilot-notification-submit");
+    let closeBtn = doc.getElementById("pilot-notification-close");
+    let link = doc.getElementById("pilot-notification-link");
+    let alwaysSubmitCheckbox =
+      doc.getElementById("pilot-notification-always-submit-checkbox");
+    let self = this;
+
+    // Set all appropriate attributes on popup:
+    if (isExtensionUpdate) {
+      popup.setAttribute("tpisextensionupdate", "true");
+    }
+    popup.setAttribute("noautohide", !fragile);
+    titleLabel.setAttribute("value", title);
+    while (textLabel.lastChild) {
+      textLabel.removeChild(textLabel.lastChild);
+    }
+    textLabel.appendChild(doc.createTextNode(text));
+    if (iconClass) {
+      // css will set the image url based on the class.
+      icon.setAttribute("class", iconClass);
+    }
+
+    alwaysSubmitCheckbox.setAttribute("hidden", !showAlwaysSubmitCheckbox);
+    if (showSubmit) {
+      if (isExtensionUpdate) {
+        submitBtn.setAttribute("label",
+	  this._stringBundle.GetStringFromName(
+	    "testpilot.notification.update"));
+	submitBtn.onclick = function() {
+          this._extensionUpdater.check(EXTENSION_ID);
+          self._hideNotification(window, onCloseCallback);
+	};
+      } else {
+        submitBtn.setAttribute("label",
+	  this._stringBundle.GetStringFromName("testpilot.submit"));
+        // Functionality for submit button:
+        submitBtn.onclick = function() {
+          self._hideNotification(window, onCloseCallback);
+          if (showAlwaysSubmitCheckbox && alwaysSubmitCheckbox.checked) {
+            self._prefs.setBoolPref(ALWAYS_SUBMIT_DATA, true);
+          }
+          task.upload( function(success) {
+            if (success) {
+              self._showNotification(
+		task, true,
+                self._stringBundle.GetStringFromName(
+		  "testpilot.notification.thankYouForUploadingData.message"),
+                self._stringBundle.GetStringFromName(
+		  "testpilot.notification.thankYouForUploadingData"),
+		"study-submitted", false, false,
+                self._stringBundle.GetStringFromName("testpilot.moreInfo"),
+		task.defaultUrl);
+            } else {
+              // TODO any point in showing an error message here?
+            }
+          });
+        };
+      }
+    }
+    submitBtn.setAttribute("hidden", !showSubmit);
+
+    // Create the link if specified:
+    if (linkText && (linkUrl || task)) {
+      link.setAttribute("value", linkText);
+      link.setAttribute("class", "notification-link");
+      link.onclick = function(event) {
+        if (event.button == 0) {
+	  if (task) {
+            task.loadPage();
+	  } else {
+            self._openChromeless(linkUrl);
+	  }
+          self._hideNotification(window, onCloseCallback);
+        }
+      };
+      link.setAttribute("hidden", false);
+    } else {
+      link.setAttribute("hidden", true);
+    }
+
+    closeBtn.onclick = function() {
+      self._hideNotification(window, onCloseCallback);
+    };
+
+    // Show the popup:
+    popup.hidden = false;
+    popup.setAttribute("open", "true");
+    popup.openPopup( anchor, "after_end");
+  },
+
+=======
+>>>>>>> other
   _openChromeless: function TPS__openChromeless(url) {
     let window = this._getFrontBrowserWindow();
     window.TestPilotWindowUtils.openChromeless(url);
@@ -394,12 +557,28 @@ let TestPilotSetup = {
     let win = this._getFrontBrowserWindow();
 
     // Highest priority is if there is a finished test (needs a decision)
-    if (this._prefs.getValue(POPUP_SHOW_ON_FINISH, false)) {
+    if (this._prefs.getBoolPref(POPUP_SHOW_ON_FINISH)) {
       for (i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
         if (task.status == TaskConstants.STATUS_FINISHED) {
+<<<<<<< local
+          if (!this._prefs.getBoolPref(ALWAYS_SUBMIT_DATA)) {
+            this._showNotification(
+	      task, false,
+	      this._stringBundle.formatStringFromName(
+		"testpilot.notification.readyToSubmit.message", [task.title],
+		1),
+	      this._stringBundle.GetStringFromName(
+		"testpilot.notification.readyToSubmit"),
+	      "study-finished", true, true,
+	      this._stringBundle.GetStringFromName("testpilot.moreInfo"),
+	      task.defaultUrl);
+            // We return after showing something, because it only makes
+            // sense to show one notification at a time!
+=======
           if (!this._prefs.getValue(ALWAYS_SUBMIT_DATA, false)) {
             this._showSubmitNotification(task);
+>>>>>>> other
             return;
           }
         }
@@ -408,7 +587,7 @@ let TestPilotSetup = {
 
     // If there's no finished test, next highest priority is new tests that
     // are starting...
-    if (this._prefs.getValue(POPUP_SHOW_ON_NEW, false)) {
+    if (this._prefs.getBoolPref(POPUP_SHOW_ON_NEW)) {
       for (i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
         if (task.status == TaskConstants.STATUS_PENDING ||
@@ -465,7 +644,7 @@ let TestPilotSetup = {
     }
 
     // And finally, new experiment results:
-    if (this._prefs.getValue(POPUP_SHOW_ON_RESULTS, false)) {
+    if (this._prefs.getBoolPref(POPUP_SHOW_ON_RESULTS)) {
       for (i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
         if (task.taskType == TaskConstants.TYPE_RESULTS &&
@@ -526,14 +705,18 @@ let TestPilotSetup = {
     // Application.extensions undefined in Firefox 4; will use the new
     // asynchrounous API, store string in this.version, and call the
     // callback when done.
-    if (this._application.extensions) {
-      this.version = this._application.extensions.get(EXTENSION_ID).version;
-      callback();
-    } else {
-      let self = this;
-      self._application.getExtensions(function(extensions) {
-        self.version = extensions.get(EXTENSION_ID).version;
+    let self = this;
+    if (self.version != "") {
+      if (callback) {
         callback();
+      }
+    } else {
+      Cu.import("resource://gre/modules/AddonManager.jsm");
+      AddonManager.getAddonByID(EXTENSION_ID, function(addon) {
+        self.version = addon.version;
+        if (callback) {
+          callback();
+        }
       });
     }
   },
@@ -550,9 +733,11 @@ let TestPilotSetup = {
   },
 
   _isNewerThanFirefox: function TPS__isNewerThanFirefox(versionString) {
+    let appVersion = Cc["@mozilla.org/xre/app-info;1"]
+                       .getService(Ci.nsIXULAppInfo).version;
     let result = Cc["@mozilla.org/xpcom/version-comparator;1"]
                    .getService(Ci.nsIVersionComparator)
-                   .compare(this._application.version, versionString);
+                   .compare(appVersion, versionString);
     if (result < 0) {
       return true; // versionString is newer than Firefox
     } else {
@@ -605,16 +790,17 @@ let TestPilotSetup = {
          * using random subsample deployment will provide a range (say, 0 ~ 30) which means
          * only users who roll within that range will run the study. */
         let prefName = RANDOM_DEPLOY_PREFIX + "." + randomDeployment.rolloutCode;
-        let myRoll = this._prefs.getValue(prefName, null);
-        if (myRoll == null) {
-          myRoll = Math.floor(Math.random()*100);
-          this._prefs.setValue(prefName, myRoll);
-        }
-        if (myRoll < randomDeployment.minRoll) {
-          return false;
-        }
-        if (myRoll > randomDeployment.maxRoll) {
-          return false;
+        if (!this._prefs.prefHasUserValue(prefName)) {
+          let myRoll = Math.floor(Math.random()*100);
+          this._prefs.setIntPref(prefName, myRoll);
+        } else {
+          let myRoll = this._prefs.getIntPref(prefName);
+          if (myRoll < randomDeployment.minRoll) {
+            return false;
+          }
+          if (myRoll > randomDeployment.maxRoll) {
+            return false;
+          }
         }
       }
 

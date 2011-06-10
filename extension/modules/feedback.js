@@ -39,16 +39,20 @@ EXPORTED_SYMBOLS = ["FeedbackManager"];
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 
-let Application = Cc["@mozilla.org/fuel/application;1"]
-                  .getService(Ci.fuelIApplication);
-
 var FeedbackManager = {
   _lastVisitedUrl: null,
+
+  __prefs: null,
+  get _prefs() {
+    this.__prefs = Cc["@mozilla.org/preferences-service;1"]
+      .getService(Ci.nsIPrefBranch);
+    return this.__prefs;
+  },
 
   _happyUrl: null,
   get happyUrl() {
     if (!this._happyUrl) {
-      this._happyUrl = Application.prefs.getValue("extensions.input.happyURL", "");
+      this._happyUrl = this._prefs.getCharPref("extensions.input.happyURL");
     }
     return this._happyUrl;
   },
@@ -56,7 +60,7 @@ var FeedbackManager = {
   _sadUrl: null,
   get sadUrl() {
     if (!this._sadUrl) {
-      this._sadUrl = Application.prefs.getValue("extensions.input.sadURL", "");
+      this._sadUrl = this._prefs.getCharPref("extensions.input.sadURL");
     }
     return this._sadUrl;
   },
@@ -64,7 +68,7 @@ var FeedbackManager = {
   _brokenUrl: null,
   get brokenUrl() {
     if (!this._brokenUrl) {
-      this._brokenUrl = Application.prefs.getValue("extensions.input.brokenURL", "");
+      this._brokenUrl = this._prefs.getCharPref("extensions.input.brokenURL");
     }
     return this._brokenUrl;
   },
@@ -72,7 +76,7 @@ var FeedbackManager = {
   _ideaUrl: null,
   get ideaUrl() {
     if (!this._ideaUrl) {
-      this._ideaUrl = Application.prefs.getValue("extensions.input.ideaURL", "");
+      this._ideaUrl = this._prefs.getCharPref("extensions.input.ideaURL");
     }
     return this._ideaUrl;
   },
