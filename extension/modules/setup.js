@@ -231,8 +231,7 @@ let TestPilotSetup = {
             self._prefs.setCharPref(VERSION_PREF, self.version);
             let browser = self._getFrontBrowserWindow().getBrowser();
             let url = self._prefs.getCharPref(FIRST_RUN_PREF);
-            let tab = browser.addTab(url);
-            browser.selectedTab = tab;
+            self._openInTab(url);
         }
 
         // Install tasks. (This requires knowing the version, so it is
@@ -335,6 +334,11 @@ let TestPilotSetup = {
   _openChromeless: function TPS__openChromeless(url) {
     let window = this._getFrontBrowserWindow();
     window.TestPilotWindowUtils.openChromeless(url);
+  },
+
+  _openInTab: function TPS__openInTab(url) {
+    let window = this._getFrontBrowserWindow();
+    window.TestPilotWindowUtils.openInTab(url);
   },
 
   _showSubmitNotification: function(task) {

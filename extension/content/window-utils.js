@@ -60,10 +60,26 @@ var TestPilotWindowUtils;
     },
 
     openInTab: function(url) {
+      // Fennec implementation (https://wiki.mozilla.org/Mobile/Fennec/CodeSnippets):
+      if (Browser) {
+        // see if url already open in a tab:
+        let browserList = Browser.browsers;
+        for (let i = 0; i < browserList.length; i++) {
+          if (url == browserList[i].currentURI.spec) {
+            Browser.selectedTab = browserList[i];
+            return;
+          }
+        }
+
+        // if not, open it:
+        Browser.addTab(url, true); // true means bring it to front
+        return;
+      }
+
+      // Desktop implementation:
       let wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
                  .getService(Components.interfaces.nsIWindowMediator);
       let enumerator = wm.getEnumerator("navigator:browser");
-      let found = false;
 
       while(enumerator.hasMoreElements()) {
         let win = enumerator.getNext();
@@ -75,23 +91,20 @@ var TestPilotWindowUtils;
           let currentBrowser = tabbrowser.getBrowserAtIndex(i);
           if (url == currentBrowser.currentURI.spec) {
             tabbrowser.selectedTab = tabbrowser.tabContainer.childNodes[i];
-            found = true;
             win.focus();
-            break;
+            return;
           }
         }
       }
 
-      if (!found) {
-        let win = wm.getMostRecentWindow("navigator:browser");
-        if (win) {
-          let browser = win.getBrowser();
-          let tab = browser.addTab(url);
-          browser.selectedTab = tab;
-          win.focus();
-        } else {
-          window.open(url);
-        }
+      let win = wm.getMostRecentWindow("navigator:browser");
+      if (win) {
+        let browser = win.getBrowser();
+        let tab = browser.addTab(url);
+        browser.selectedTab = tab;
+        win.focus();
+      } else {
+        window.open(url);
       }
     },
 
