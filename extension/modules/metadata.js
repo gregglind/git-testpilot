@@ -91,6 +91,7 @@ let MetadataCollector = {
     //http://lxr.mozilla.org/aviarybranch/source/toolkit/mozapps/update/public/nsIUpdateService.idl#45
     //resource://gre/modules/AddonManager.jsm
     Cu.import("resource://gre/modules/AddonManager.jsm");
+    let myExtensions = [];
     AddonManager.getAllAddons(function(extensions) {
       for each (let ex in extensions.all) {
         myExtensions.push({ id: Weave_sha1(ex.id), isEnabled: ex.enabled });
@@ -111,7 +112,18 @@ let MetadataCollector = {
 
     for (let i = 0; i < length; i++) {
       prefName = "accessibility." + children[i];
-      prefValue = branch.getValue(children[i]);
+      let type = branch.getPrefType(children[i]);
+      switch (type) {
+      case branch.PREF_STRING:
+        prefValue = branch.getCharPref(children[i]);
+        break;
+      case branch.PREF_INT:
+        prefValue = branch.getIntPref(children[i]);
+        break;
+      case branch.PREF_BOOL:
+        prefValue = branch.getBoolPref(children[i]);
+        break;
+      }
       accessibilities.push({ name: prefName, value: prefValue });
     }
 
@@ -165,7 +177,8 @@ let MetadataCollector = {
   },
 
   getUpdateChannel: function MetadataCollector_getUpdateChannel() {
-    return Application.prefs.getValue(UPDATE_CHANNEL_PREF, "");
+    // TODO should be reading this from default branch
+    return this._prefs.getCharPref(UPDATE_CHANNEL_PREF, "");
   },
 
   getMetadata: function MetadataCollector_getMetadata(callback) {

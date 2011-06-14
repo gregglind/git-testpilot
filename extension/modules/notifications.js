@@ -49,10 +49,13 @@ const Cu = Components.utils;
 
 function AndroidNotificationManager() {
   // See https://developer.mozilla.org/en/XPCOM_Interface_Reference/nsIAlertsService
+  Components.utils.import("resource://gre/modules/Services.jsm");
   Services.console.logStringMessage("Android Notfn Manager Instantiated.");
+  // Get an error in the next line saying NS_ERROR_XPC_GS_RETURNED_FAILURE (nsIJSCID.getService)
+  // is this because the alert service isn't available on desktop fennec???
   this._alerts = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
 }
-AndroidNotificationmanager.prototype = {
+AndroidNotificationManager.prototype = {
   showNotification: function TP_AndroidNotfn_showNotification(window, options) {
     /* Submit, SeeAllStudies, alwaysSubmit, and Cancel options not implemented.
      * fragile and iconClass are ignored.  Clicking the notification always activates
