@@ -4,42 +4,48 @@ var Cc = Components.classes;
 var Ci = Components.interfaces;
 var testsRun = 0;
 var testsPassed = 0;
+Cu.import("resource://gre/modules/Services.jsm");
+
+function output(txt) {
+  // dump on desktop, Services.console on mobile
+  Services.console.logStringMessage(txt);
+}
 
 // Utility functions for testing:
 
 function cheapAssertEqual(a, b, errorMsg) {
   testsRun += 1;
   if (a == b) {
-    dump("UNIT TEST PASSED.\n");
+    output("UNIT TEST PASSED.\n");
     testsPassed += 1;
   } else {
-    dump("UNIT TEST FAILED: ");
-    dump(errorMsg + "\n");
-    dump(a + " does not equal " + b + "\n");
+    output("UNIT TEST FAILED: ");
+    output(errorMsg + "\n");
+    output(a + " does not equal " + b + "\n");
   }
 }
 
 function cheapAssertNotEqual(a, b, errorMsg) {
   testsRun += 1;
   if (a != b) {
-    dump("UNIT TEST PASSED.\n");
+    output("UNIT TEST PASSED.\n");
     testsPassed += 1;
   } else {
-    dump("UNIT TEST FAILED: ");
-    dump(errorMsg + "\n");
-    dump(a + " equals " + b + " when it shouldn't.\n");
+    output("UNIT TEST FAILED: ");
+    output(errorMsg + "\n");
+    output(a + " equals " + b + " when it shouldn't.\n");
   }
 }
 
 function cheapAssertStringContains(bigString, subString, errorMsg) {
   testsRun += 1;
   if (bigString.indexOf(subString) > -1) {
-    dump("UNIT TEST PASSED.\n");
+    output("UNIT TEST PASSED.\n");
     testsPassed += 1;
   } else {
-    dump("UNIT TEST FAILED: ");
-    dump(errorMsg + "\n");
-    dump(bigString + " does not contain " + subString + "\n");
+    output("UNIT TEST FAILED: ");
+    output(errorMsg + "\n");
+    output(bigString + " does not contain " + subString + "\n");
   }
 }
 
@@ -56,38 +62,38 @@ function cheapAssertEqualArrays(a, b, errorMsg) {
     }
   }
   if (equal) {
-    dump("UNIT TEST PASSED.\n");
+    output("UNIT TEST PASSED.\n");
     testsPassed += 1;
   } else {
-    dump("UNIT TEST FAILED: ");
-    dump(errorMsg + "\n");
-    dump(a + " does not equal " + b + "\n");
+    output("UNIT TEST FAILED: ");
+    output(errorMsg + "\n");
+    output(a + " does not equal " + b + "\n");
   }
 }
 
 function cheapAssertRange(lowerBound, value, upperBound, errorMsg) {
   testsRun += 1;
   if (lowerBound <= value && value <= upperBound) {
-    dump("UNIT TEST PASSED.\n");
+    output("UNIT TEST PASSED.\n");
     testsPassed += 1;
   } else {
-    dump("UNIT TEST FAILED: ");
-    dump(errorMsg + "\n");
-    dump(value + " is outside the range of " + lowerBound + " to "
+    output("UNIT TEST FAILED: ");
+    output(errorMsg + "\n");
+    output(value + " is outside the range of " + lowerBound + " to "
          + upperBound + "\n");
   }
 }
 
 function cheapAssertFail(errorMsg) {
   testsRun += 1;
-  dump("UNIT TEST FAILED: ");
-  dump(errorMsg + "\n");
+  output("UNIT TEST FAILED: ");
+  output(errorMsg + "\n");
 }
 
 // Utility functions for cleanup:
 
 function clearAllPrefsForStudy(studyId) {
-  dump("Looking for prefs to delete...\n");
+  output("Looking for prefs to delete...\n");
   let prefService = Cc["@mozilla.org/preferences-service;1"]
                      .getService(Ci.nsIPrefService)
                      .QueryInterface(Ci.nsIPrefBranch2);
@@ -95,7 +101,7 @@ function clearAllPrefsForStudy(studyId) {
   let prefNames = prefService.getChildList(prefStem);
   for each (let prefName in prefNames) {
     if (prefName.indexOf(studyId) != -1) {
-      dump("Clearing pref " + prefName + "\n");
+      output("Clearing pref " + prefName + "\n");
       prefService.clearUserPref(prefName);
     }
   }
@@ -150,7 +156,7 @@ function testFirefoxVersionCheck() {
 function testStringSanitizer() {
   Cu.import("resource://testpilot/modules/string_sanitizer.js");
   var evilString = "I *have* (evil) ^characters^ [hahaha];";
-  dump("Sanitized evil string is " + sanitizeString(evilString) + "\n");
+  output("Sanitized evil string is " + sanitizeString(evilString) + "\n");
   cheapAssertEqual(sanitizeString(evilString),
                    "I ?have? ?evil? ?characters? ?hahaha??");
 }
@@ -377,10 +383,10 @@ function testRemotelyLoadTabsExperiment() {
 }
 
 let stubLogger = {
-  getLogger: function() { return {trace: function(str) {dump("Trace: " + str +"\n");},
-                                  warn: function(str) {dump("Warn: " + str +"\n");},
-                                  info: function(str) {dump("Info: " + str +"\n");},
-                                  debug: function(str) {dump("Debug: " + str +"\n");}};}
+  getLogger: function() { return {trace: function(str) {output("Trace: " + str +"\n");},
+                                  warn: function(str) {output("Warn: " + str +"\n");},
+                                  info: function(str) {output("Info: " + str +"\n");},
+                                  debug: function(str) {output("Debug: " + str +"\n");}};}
 };
 
 
@@ -402,7 +408,7 @@ function testRemoteLoaderIndexCache() {
   cheapAssertEqual(remoteLoader._loadCachedIndexFile(), data);
 
   // Clean up by killing the file so we don't break Test Pilot so bad
-  dump("Killing the mungled index file.\n");
+  output("Killing the mungled index file.\n");
   let indexFile = remoteLoader.cachedIndexNsiFile;
   if (indexFile.exists()) {
     indexFile.remove(false);
@@ -668,17 +674,17 @@ function testKillSwitch() {
 
   function clearIndexFileCache() {
     // TODO this needs to go in a teardown
-    dump("Killing the mungled index file.\n");
+    output("Killing the mungled index file.\n");
     let indexFile = remoteLoader.cachedIndexNsiFile;
     if (indexFile.exists()) {
       indexFile.remove(false);
     }
   }
 
-  dump("Preparing To Test Kill Switch!!!\n");
+  output("Preparing To Test Kill Switch!!!\n");
   remoteLoader.checkForUpdates(function(hasChanges) {
     if (hasChanges) {
-      dump("Testing that foo study is loaded.\n");
+      output("Testing that foo study is loaded.\n");
       let exp = remoteLoader.getExperiments();
       let count = 0;
       for (let i in exp) {
@@ -697,16 +703,16 @@ function testKillSwitch() {
      * */
     clearIndexFileCache();
     indexJson = indexJson2;
-    dump("Preparing to check for updates 2nd time.\n");
+    output("Preparing to check for updates 2nd time.\n");
     remoteLoader.checkForUpdates( function(hasChanges) {
-      dump("in the callback for check for updates 2nd time.\n");
+      output("in the callback for check for updates 2nd time.\n");
       if (hasChanges) {
-        dump("checkforUpdates 2nd time - has changes.\n");
+        output("checkforUpdates 2nd time - has changes.\n");
       } else {
-        dump("checkforUpdates 2nd time - does not have changes.\n");
+        output("checkforUpdates 2nd time - does not have changes.\n");
       }
 
-      dump("Testing that foo study is loaded. (2nd time)\n");
+      output("Testing that foo study is loaded. (2nd time)\n");
       let exp = remoteLoader.getExperiments();
       let count = 0;
       for (let i in exp) {
@@ -721,12 +727,12 @@ function testKillSwitch() {
       indexJson = indexJson3;
       remoteLoader.checkForUpdates( function(hasChanges) {
         if (hasChanges) {
-          dump("checkForUpdates 3rd time - has changes.\n");
+          output("checkForUpdates 3rd time - has changes.\n");
         } else {
-          dump("checkForUpdates 3rd time - has no changes.\n");
+          output("checkForUpdates 3rd time - has no changes.\n");
         }
 
-        dump("Testing that foo study is NOT loaded. (3rd time)\n");
+        output("Testing that foo study is NOT loaded. (3rd time)\n");
         let exp = remoteLoader.getExperiments();
         let count = 0;
         for (let i in exp) {
@@ -794,7 +800,7 @@ function testSameGUIDs() {
     let expGuid = JSON.parse(jsonString).metadata.task_guid;
     survey._prependMetadataToJSON(function(jsonString) {
       let surveyGuid = JSON.parse(jsonString).metadata.task_guid;
-      dump("expGuid is " + expGuid + ", surveyGuid is " + surveyGuid + "\n");
+      output("expGuid is " + expGuid + ", surveyGuid is " + surveyGuid + "\n");
       cheapAssertEqual(expGuid, surveyGuid, "guids should match");
       cheapAssertEqual((expGuid != ""), true, "guid should be non-empty");
 
@@ -814,7 +820,7 @@ function testSameGUIDs() {
         // experiment and survey should have same GUID again:
         experiment2._prependMetadataToJSON(function(jsonString) {
           let exp2Guid = JSON.parse(jsonString).metadata.task_guid;
-          dump("exp2Guid is " + exp2Guid + ", survey2Guid is " + survey2Guid + "\n");
+          output("exp2Guid is " + exp2Guid + ", survey2Guid is " + survey2Guid + "\n");
           cheapAssertEqual(exp2Guid, survey2Guid, "guids should match");
           cheapAssertNotEqual(exp2Guid, "", "guid should be non-empty");
         });
@@ -944,7 +950,7 @@ function runAllTests() {
   //testRecurringStudyStateChange();
   //testKillSwitch();
   //testSameGUIDs();
-  testExceptionLogging();
-  dump("TESTING COMPLETE.  " + testsPassed + " out of " + testsRun +
+  //testExceptionLogging();
+  output("TESTING COMPLETE.  " + testsPassed + " out of " + testsRun +
        " tests passed.");
 }
