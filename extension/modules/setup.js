@@ -226,7 +226,7 @@ let TestPilotSetup = {
       this.getVersion(function() {
         /* Show first run page (in front window) only the first time after install;
          * Don't show first run page in Feedback UI version. */
-        if (self._prefs.prefHasUserValue(VERSION_PREF) &&
+        if (!self._prefs.prefHasUserValue(VERSION_PREF) &&
            (!TestPilotUIBuilder.channelUsesFeedback())) {
             self._prefs.setCharPref(VERSION_PREF, self.version);
             let browser = self._getFrontBrowserWindow().getBrowser();
