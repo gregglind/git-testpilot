@@ -1071,7 +1071,7 @@ TestPilotBuiltinSurvey.prototype = {
       }
       let prefName = SURVEY_ANSWER_PREFIX + self._id;
       let surveyAnswers;
-      if (this._prefs.prefHasUserValue(prefName)) {
+      if (self._prefs.prefHasUserValue(prefName)) {
         surveyAnswers = JSON.parse(this._prefs.getCharPref(prefName));
       } else {
         surveyAnswers = JSON.parse("{}");
