@@ -197,18 +197,27 @@
     var prefService  = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
     var prefName = "extensions.testpilot.indexFileName";
     var selector = document.getElementById("index-file-selector");
-    if (prefService.getCharPref(prefName) == "index.json") {
-      selector.selectedIndex = 0;
-    } else {
-      selector.selectedIndex = 1;
+    switch (prefService.getCharPref(prefName)) {
+      case "index.json":
+        selector.selectedIndex = 0;
+      break;
+      case "index-dev.json":
+        selector.selectedIndex = 1;
+      break;
+      case "index-mobile.json":
+        selector.selectedIndex = 2;
+      break;
     }
   }
 
   function setSelectedIndexFile() {
+    document.getElementById("debug").innerHTML = "Setting index file";
+    try {
     var prefService  = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
     var prefName = "extensions.testpilot.indexFileName";
     var selector = document.getElementById("index-file-selector");
     var i = selector.selectedIndex;
+    document.getElementById("debug").innerHTML = "Setting index file to " + selector.options[i].value;
     prefService.setCharPref( prefName, selector.options[i].value );
 
     // DELETE CACHED INDEX FILE
@@ -219,6 +228,9 @@
     file.append("index.json");
     if (file.exists()) {
       file.remove(false);
+    }
+    } catch(e) {
+       document.getElementById("debug").innerHTML = "Error: " + e;
     }
   }
 
@@ -262,7 +274,7 @@ Index file:
 <select id="index-file-selector" onchange="setSelectedIndexFile();">
   <option value="index.json">index.json</option>
   <option value="index-dev.json">index-dev.json</option>
-  <option value="index-dev.json">index-mobile.json</option>
+  <option value="index-mobile.json">index-mobile.json</option>
 </select>
 </p>
 </fieldset>
