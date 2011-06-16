@@ -658,7 +658,7 @@ TestPilotExperiment.prototype = {
   get _expirationDateForDataSubmission() {
     let prefName = EXPIRATION_DATE_FOR_DATA_SUBMISSION_PREFIX + this._id;
     if (this._prefs.prefHasUserValue(prefName)) {
-      return this._prefs.getCharValue(prefName);
+      return this._prefs.getCharPref(prefName);
     } else {
       return "";
     }
@@ -676,7 +676,7 @@ TestPilotExperiment.prototype = {
   get _dateForDataDeletion() {
     let prefName = DATE_FOR_DATA_DELETION_PREFIX + this._id;
     if (this._prefs.prefHasUserValue(prefName)) {
-      return this._prefs.getCharValue(prefName);
+      return this._prefs.getCharPref(prefName);
     } else {
       return "";
     }
