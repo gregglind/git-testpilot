@@ -51,6 +51,7 @@ const Cu = Components.utils;
 const UPDATE_CHANNEL_PREF = "app.update.channel";
 const POPUP_SHOW_ON_NEW = "extensions.testpilot.popup.showOnNewStudy";
 const POPUP_CHECK_INTERVAL = "extensions.testpilot.popup.delayAfterStartup";
+const FENNEC_APP_ID = "{a23983c0-fd0e-11dc-95ff-0800200c9a66}";
 
 var TestPilotUIBuilder = {
   get _prefs() {
@@ -161,13 +162,15 @@ var TestPilotUIBuilder = {
   },
 
   buildCorrectInterface: function(window) {
-    Components.utils.import("resource://gre/modules/Services.jsm");
-    Services.console.logStringMessage("In buildCorrectInterface.");
+    /* Apply no overlay to Fennec: */
+    if (this._appID == FENNEC_APP_ID) {
+      return;
+    }
+
     let firefoxnav = window.document.getElementById("nav-bar");
     /* This is sometimes called for windows that don't have a navbar - in
      * that case, do nothing. TODO maybe this should be in onWindowLoad?*/
     if (!firefoxnav) {
-      Services.console.logStringMessage("Applying no overlay.");
       return;
     }
 
@@ -196,7 +199,7 @@ var TestPilotUIBuilder = {
 
   getNotificationManager: function() {
     // If we're on Android, use the Android notification manager!
-    if (this._appID == "{a23983c0-fd0e-11dc-95ff-0800200c9a66}") {
+    if (this._appID == FENNEC_APP_ID) {
       return new ntfnModule.AndroidNotificationManager();
     }
 
