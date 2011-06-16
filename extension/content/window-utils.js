@@ -60,9 +60,10 @@ var TestPilotWindowUtils;
     },
 
     openAllStudies: function() {
-      this.openInTab('chrome://testpilot/content/all-studies.html');
-      // TODO if we're in Fennec, then if this was triggered from the options pane, need to close
-      // the pane...
+      if (BrowserUI) { // Fennec only
+        // BrowserUI.newTab will focus on the content area of the new tab
+        BrowserUI.newTab("chrome://testpilot/content/all-studies.html", Browser.selectedTab);
+      }
     },
 
     openInTab: function(url) {
