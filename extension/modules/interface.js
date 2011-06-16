@@ -161,10 +161,13 @@ var TestPilotUIBuilder = {
   },
 
   buildCorrectInterface: function(window) {
+    Components.utils.import("resource://gre/modules/Services.jsm");
+    Services.console.logStringMessage("In buildCorrectInterface.");
     let firefoxnav = window.document.getElementById("nav-bar");
     /* This is sometimes called for windows that don't have a navbar - in
      * that case, do nothing. TODO maybe this should be in onWindowLoad?*/
     if (!firefoxnav) {
+      Services.console.logStringMessage("Applying no overlay.");
       return;
     }
 
@@ -192,9 +195,6 @@ var TestPilotUIBuilder = {
   },
 
   getNotificationManager: function() {
-    let ntfnModule = {};
-    Cu.import("resource://testpilot/modules/notifications.js", ntfnModule);
-
     // If we're on Android, use the Android notification manager!
     if (this._appID == "{a23983c0-fd0e-11dc-95ff-0800200c9a66}") {
       return new ntfnModule.AndroidNotificationManager();

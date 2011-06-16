@@ -5,4 +5,9 @@
   <setting pref="extensions.testpilot.alwaysSubmitData" type="bool" title="Automatically Submit">
     Data from finished studies will be submitted without asking you each time.
   </setting>
+  <setting title="Test Pilot Studies" type="control">
+    See all Test Pilot studies currently running
+    <button id="see-all-studies-button" label="See All Studies"
+            oncommand="TestPilotWindowUtils.openAllStudies();"/>
+  </setting>
 </vbox>

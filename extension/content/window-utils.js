@@ -59,6 +59,12 @@ var TestPilotWindowUtils;
       }
     },
 
+    openAllStudies: function() {
+      this.openInTab('chrome://testpilot/content/all-studies.html');
+      // TODO if we're in Fennec, then if this was triggered from the options pane, need to close
+      // the pane...
+    },
+
     openInTab: function(url) {
       // Fennec implementation (https://wiki.mozilla.org/Mobile/Fennec/CodeSnippets):
       if (Browser) {
