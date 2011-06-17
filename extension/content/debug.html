@@ -106,12 +106,15 @@
   }
 
   function makeThereBeAPopup() {
+    document.getElementById("debug").innerHTML = "Making popup...";
     Components.utils.import("resource://testpilot/modules/interface.js");
     var notifier = TestPilotUIBuilder.getNotificationManager();
+    document.getElementById("debug").innerHTML = "Got Notfn Manager";
     var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].
                getService(Components.interfaces.nsIWindowMediator);
     var window = wm.getMostRecentWindow("navigator:browser");
-    //try {
+    document.getElementById("debug").innerHTML = "Got Window.";
+    try {
     notifier.showNotification(window, { title: "This is title",
                                         text: "This is text",
                                         iconClass: "study-submitted",
@@ -120,9 +123,9 @@
                                         closeCallback: function() {dump("You closed the notfn\n");},
                                         fragile: true
      });
-    //} catch(e) {
-    //  document.getElementById("debug").innerHTML = "Error: " + e;
-    //}
+    } catch(e) {
+      document.getElementById("debug").innerHTML = "Error: " + e;
+    }
   }
 
   function wipeDb() {

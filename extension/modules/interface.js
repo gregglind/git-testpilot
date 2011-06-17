@@ -74,13 +74,13 @@ var TestPilotUIBuilder = {
 
   get _appVersion() {
     delete this._appVersion;
-    return this.__appVersion = Cc["@mozilla.org/xre/app-info;1"]
+    return this._appVersion = Cc["@mozilla.org/xre/app-info;1"]
       .getService(Ci.nsIXULAppInfo).version;
   },
 
   get _appID() {
     delete this._appID;
-    return this.__appID = Cc["@mozilla.org/xre/app-info;1"]
+    return this._appID = Cc["@mozilla.org/xre/app-info;1"]
       .getService(Ci.nsIXULAppInfo).ID;
   },
 
@@ -199,19 +199,28 @@ var TestPilotUIBuilder = {
 
   getNotificationManager: function() {
     // If we're on Android, use the Android notification manager!
+    let ntfnModule = {};
+    Cu.import("resource://testpilot/modules/notifications.js", ntfnModule);
+    Components.utils.import("resource://gre/modules/Services.jsm");
+
+    Services.console.logStringMessage("appID is " + this._appID);
     if (this._appID == FENNEC_APP_ID) {
+      Services.console.logStringMessage("making Android Notfn Manager..");
       return new ntfnModule.AndroidNotificationManager();
     }
 
     // Use custom notifications anchored to the Feedback button, if there is a Feedback button
     if (this.channelUsesFeedback()) {
+      Services.console.logStringMessage("making Custom Notfn Manager..");
       return new ntfnModule.CustomNotificationManager(true);
     }
     // If no feedback button, and popup notifications available, use those
     if (this.hasDoorhangerNotifications()) {
+      Services.console.logStringMessage("making Popup Notfn Manager..");
       return new ntfnModule.PopupNotificationManager();
     }
     // If neither one is available, use custom notifications anchored to Test Pilot status icon
+    Services.console.logStringMessage("making Custom Notfn Manager..");
     return new ntfnModule.CustomNotificationManager(false);
   }
 };
