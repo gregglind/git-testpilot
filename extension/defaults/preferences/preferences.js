@@ -1,4 +1,4 @@
-pref("extensions.testpilot.indexFileName", "index.json");
+pref("extensions.testpilot.indexFileName", "index-mobile.json");
 
 pref("extensions.testpilot@labs.mozilla.com.description", "chrome://testpilot/locale/main.properties");
 
