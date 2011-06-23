@@ -177,12 +177,9 @@ let TestPilotSetup = {
     return this.__obs;
   },
 
-  __notifier: null,
   get _notifier() {
-    if (this.__notifier == null) {
-      this.__notifier = TestPilotUIBuilder.getNotificationManager();
-    }
-    return this.__notifier;
+    delete this._notifier;
+    return this._notifier = TestPilotUIBuilder.getNotificationManager();
   },
 
   globalStartup: function TPS__doGlobalSetup() {
