@@ -162,16 +162,11 @@ var TestPilotUIBuilder = {
       return;
     }
 
-    /* Overlay Feedback XUL if we're in the beta update channel, Test Pilot XUL otherwise.
-     * Once the overlay is complete, call buildFeedbackInterface() or buildTestPilotInterface(). */
-    let self = this;
+    /* Overlay Feedback XUL if we're in the beta update channel, Test Pilot XUL otherwise, and
+     * call buildFeedbackInterface() or buildTestPilotInterface(). */
     if (this.channelUsesFeedback()) {
-      window.document.loadOverlay("chrome://testpilot/content/feedback-browser.xul",
-                                  {observe: function(subject, topic, data) {
-                                     if (topic == "xul-overlay-merged") {
-                                       self.buildFeedbackInterface(window);
-                                     }
-                                   }});
+      window.document.loadOverlay("chrome://testpilot/content/feedback-browser.xul");
+      this.buildFeedbackInterface(window);
     } else {
       /* Overlay Test Pilot XUL -- that means the base overlay tp-browser.xul to make the menu,
        * and another overlay (either popupNotifications or customNofications) to make the
@@ -181,18 +176,9 @@ var TestPilotUIBuilder = {
       let notfnOverlay = (this.hasDoorhangerNotifications() ?
                           "chrome://testpilot/content/tp-browser-popupNotifications.xul" :
                           "chrome://testpilot/content/tp-browser-customNotifications.xul");
-
-      window.document.loadOverlay("chrome://testpilot/content/tp-browser.xul",
-        {observe: function(subject, topic, data) {
-           if (topic == "xul-overlay-merged") {
-             window.document.loadOverlay(notfnOverlay,
-                                         {observe: function(subject, topic, data) {
-                                            if (topic == "xul-overlay-merged") {
-                                              self.buildTestPilotInterface(window);
-                                            }
-                                          }});
-           }
-         }});
+      window.document.loadOverlay("chrome://testpilot/content/tp-browser.xul");
+      window.document.loadOverlay(notfnOverlay);
+      this.buildTestPilotInterface(window);
     }
   },
 
