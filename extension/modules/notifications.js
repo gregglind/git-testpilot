@@ -159,9 +159,10 @@ CustomNotificationManager.prototype = {
 
 // For Fx 4.0 + , uses the built-in doorhanger notification system (but with my own anchor icon)
 function PopupNotificationManager(anchorToFeedbackButton) {
+  /* In the future, we may want to anchor these to the Feedback button if present,
+   * but for now that option is unimplemented. */
   this._popupModule = {};
   Components.utils.import("resource://gre/modules/PopupNotifications.jsm", this._popupModule);
-  this._anchorToFeedbackButton = anchorToFeedbackButton;
   this._pn = null;
 }
 PopupNotificationManager.prototype = {
