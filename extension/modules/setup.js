@@ -182,6 +182,10 @@ let TestPilotSetup = {
     return this._notifier = TestPilotUIBuilder.getNotificationManager();
   },
 
+  _getStr: function(str) {
+    return this._stringBundle.GetStringFromName(str);
+  },
+
   globalStartup: function TPS__doGlobalSetup() {
     // Only ever run this stuff ONCE, on the first window restore.
     // Should get called by the Test Pilot component.
@@ -338,48 +342,67 @@ let TestPilotSetup = {
     window.TestPilotWindowUtils.openChromeless(url);
   },
 
+  _submitFromNotification: function(task) {
+    let self = this;
+    task.upload( function(success) {
+      if (success) {
+        self._notifier.showNotification(win, {
+          text: self._getStr("testpilot.notification.thankYouForUploadingData.message"),
+          title: self._getStr("testpilot.notification.thankYouForUploadingData"),
+          iconClass:"study-submitted",
+          fragile: true
+        }, [{
+          label: self._getStr("testpilot.notification.seeYourData"),
+          customUiType: "link",
+          accessKey: self._getStr(todo),
+          callback: function() { task.loadPage(); }
+        }]);
+      } else {
+        // TODO any point in showing an error message here?
+      } }
+    );
+  },
+
   _showSubmitNotification: function(task) {
     let win = this._getFrontBrowserWindow();
     let self = this;
+
     this._notifier.showNotification(win, {
       text: self._stringBundle.formatStringFromName(
         "testpilot.notification.readyToSubmit.message", [task.title], 1),
-      title: self._stringBundle.GetStringFromName("testpilot.notification.readyToSubmit"),
-      iconClass: "study-finished",
-      moreInfoLabel: self._stringBundle.GetStringFromName("testpilot.notification.seeYourData"),
-      moreInfoCallback: function() { task.loadPage(); },
-      submitLabel: self._stringBundle.GetStringFromName("testpilot.submit"),
-      submitCallback: function() {
-        task.upload( function(success) {
-          if (success) {
-            self._notifier.showNotification(win, {
-              text: self._stringBundle.GetStringFromName(
-                  "testpilot.notification.thankYouForUploadingData.message"),
-              title: self._stringBundle.GetStringFromName(
-                  "testpilot.notification.thankYouForUploadingData"),
-              iconClass:"study-submitted",
-              linkText: self._stringBundle.GetStringFromName("testpilot.notification.seeYourData"),
-              linkCallback: function() {task.loadPage(); },
-              fragile: true
-            });
-          } else {
-              // TODO any point in showing an error message here?
-          } }
-        );
+      title: self._getStr("testpilot.notification.readyToSubmit"),
+      iconClass: "study-finished"
+      }, [
+      {label: self._getStr("testpilot.submit"),
+       customUiType: "button",
+       accessKey: self._getStr("testpilot.notification.accessKey.submit"),
+       callback: function() { self._submitFromNotification(task); }
       },
-      cancelLabel: self._stringBundle.GetStringFromName("testpilot.notification.cancelLabel"),
-      cancelCallback: function() {
-        task.optOut(null, null);
+
+      {label: self._getStr("testpilot.notification.seeYourData"),
+       customUiType: "link",
+       accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
+       callback: function() { task.loadPage(); }
       },
-      seeAllStudiesLabel: self._stringBundle.GetStringFromName("testpilot.notification.seeAllStudiesLabel"),
-      seeAllStudiesCallback: function() {
-        self._getFrontBrowserWindow().TestPilotWindowUtils.openAllStudiesWindow();
+
+      {label: self._getStr("testpilot.notification.seeAllStudiesLabel"),  // TODO NEW FEATURE
+       accessKey: self._getStr("testpilot.notification.accessKey.allStudies"),
+       callback: function() {
+         self._getFrontBrowserWindow().TestPilotWindowUtils.openAllStudiesWindow();
+      }},
+
+      {label: self._getStr("testpilot.notification.alwaysSubmitLabel"),
+       customUiType: "checkbox",
+       accessKey: self._getStr("testpilot.notification.accessKey.alwaysSubmit"),
+       alwaysSubmitCallback: function() { self._submitFromNotification(task);
+                                          self._prefs.setValue(ALWAYS_SUBMIT_DATA, true); }
       },
-      alwaysSubmitLabel: self._stringBundle.GetStringFromName("testpilot.notification.alwaysSubmitLabel"),
-      alwaysSubmitCallback: function() {
-        self._prefs.setValue(ALWAYS_SUBMIT_DATA, true);
-      }
-    });
+
+      {label: self._getStr("testpilot.notification.cancelLabel"), // TODO NEW FEATURE
+       accessKey: self._getStr("testpilot.notification.accessKey.cancel"),
+       callback: function() { task.optOut(null, null); }
+      }]
+    );
   },
 
   _notifyUserOfTasks: function TPS__notifyUser() {
@@ -415,23 +438,8 @@ let TestPilotSetup = {
 	      text: self._stringBundle.formatStringFromName(
 		"testpilot.notification.newTestPilotStudy.pre.message",
 		[task.title], 1),
-	      title: self._stringBundle.GetStringFromName(
-		"testpilot.notification.newTestPilotStudy"),
+	      title: self._getStr("testpilot.notification.newTestPilotStudy"),
 	      iconClass: "new-study",
-	      moreInfoLabel: self._stringBundle.GetStringFromName("testpilot.moreInfo"),
-              moreInfoCallback: function() { task.loadPage(); },
-              cancelLabel: self._stringBundle.GetStringFromName("testpilot.notification.cancelLabel"),
-              cancelCallback: function() {
-                task.optOut(null, null);
-              },
-              seeAllStudiesLabel: self._stringBundle.GetStringFromName("testpilot.notification.seeAllStudiesLabel"),
-              seeAllStudiesCallback: function() {
-                win.TestPilotWindowUtils.openAllStudiesWindow();
-              },
-              alwaysSubmitLabel: self._stringBundle.GetStringFromName("testpilot.notification.dontShowNewLabel"),
-              alwaysSubmitCallback: function() {
-                self._prefs.setValue(POPUP_SHOW_ON_NEW, false);
-              },
               closeCallback: function() {
                 /* on close callback (Bug 575767) -- when the "new study
                  * starting" popup is dismissed, then the study can start. */
@@ -441,19 +449,40 @@ let TestPilotSetup = {
                   task.changeStatus(TaskConstants.STATUS_STARTING, true);
                   TestPilotSetup.reloadRemoteExperiments();
                 }
-              }});
+              }},
+              [{label: self._getStr("testpilot.moreInfo"),
+                customUiType: "link",
+                accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
+                callback: function() { task.loadPage(); }},
+
+               {label: self._getStr("testpilot.notification.seeAllStudiesLabel"), // TODO NEW FEATURE
+                accessKey: self._getStr("testpilot.notification.accessKey.allStudies"),
+                callback: function() {win.TestPilotWindowUtils.openAllStudiesWindow();}
+               },
+
+               {label: self._getStr("testpilot.notification.dontShowNewLabel"),
+                accessKey: self._getStr("testpilot.notification.accessKey.alwaysSubmit"),
+                callback: function() { self._prefs.setValue(POPUP_SHOW_ON_NEW, false);} // TODO NEW FEATURE
+               },
+
+               {cancelLabel: self._getStr("testpilot.notification.cancelLabel"), // TODO NEW FEATURE
+                accessKey: self._getStr("testpilot.notification.accessKey.cancel"),
+                callback: function() { task.optOut(null, null); }
+              }
+              ]);
             return;
           } else if (task.taskType == TaskConstants.TYPE_SURVEY) {
             this._notifier.showNotification(win, {
 	      text: self._stringBundle.formatStringFromName(
 		"testpilot.notification.newTestPilotSurvey.message",
 		[task.title], 1),
-              title: self._stringBundle.GetStringFromName(
-		"testpilot.notification.newTestPilotSurvey"),
-	      iconClass: "new-study",
-	      moreInfoLabel: self._stringBundle.GetStringFromName("testpilot.takeSurvey"),
-	      moreInfoCallback: function() { task.loadPage(); }
-            });
+              title: self._getStr("testpilot.notification.newTestPilotSurvey"),
+	      iconClass: "new-study"},
+              [{label: self._getStr("testpilot.takeSurvey"),
+                customUiType: "button",
+                accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
+	        callback: function() { task.loadPage(); }}]
+            );
             task.changeStatus(TaskConstants.STATUS_IN_PROGRESS, true);
             return;
           }
@@ -471,12 +500,13 @@ let TestPilotSetup = {
 	        text: self._stringBundle.formatStringFromName(
 	          "testpilot.notification.newTestPilotResults.message",
 	          [task.title], 1),
-                title: self._stringBundle.GetStringFromName(
-	          "testpilot.notification.newTestPilotResults"),
-	        iconClass: "new-results",
-	        moreInfoLabel: self._stringBundle.GetStringFromName("testpilot.moreInfo"),
-                moreInfoCallback: function() { task.loadPage(); }
-              });
+                title: self._getStr("testpilot.notification.newTestPilotResults"),
+	        iconClass: "new-results"},
+                [{label: self._getStr("testpilot.moreInfo"),
+                  customUiType: "link",
+                  accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
+	          callback: function() { task.loadPage(); }}]
+               );
                 // TODO have a "don't tell me about these anymore" option?
               /* Having shown the notification, advance the status of the
                * results, so that this notification won't be shown again */
@@ -511,12 +541,13 @@ let TestPilotSetup = {
       text: self._stringBundle.formatStringFromName(
 	"testpilot.notification.autoUploadedData.message",
 	[subject.title], 1),
-      title: self._stringBundle.GetStringFromName(
-	"testpilot.notification.autoUploadedData"),
-      iconClass: "study-submitted",
-      moreInfoText: self._stringBundle.GetStringFromName("testpilot.notification.seeYourData"),
-      moreInfoCallback: function() { task.loadPage(); }
-    });
+      title: self._getStr("testpilot.notification.autoUploadedData"),
+      iconClass: "study-submitted"},
+      [{label: self._getStr("testpilot.notification.seeYourData"),
+        customUiType: "link",
+        accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
+        callback: function() { task.loadPage(); }
+       }]);
   },
 
   getVersion: function TPS_getVersion(callback) {

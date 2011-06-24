@@ -36,7 +36,7 @@
 
 /* The TestPilotSetup object will choose one of these implementations to instantiate.
  * The interface for all NotificationManager implementations is:
-     showNotification: function(window, options) {},
+     showNotification: function(window, features, choices) {},
      hideNotification: function(window) {}
  */
 
@@ -52,10 +52,22 @@ function CustomNotificationManager(anchorToFeedbackButton) {
   this._anchorToFeedback = anchorToFeedbackButton;
 }
 CustomNotificationManager.prototype = {
-  showNotification: function TP_OldNotfn_showNotification(window, options) {
+  showNotification: function TP_OldNotfn_showNotification(window, features, choices) {
     let doc = window.document;
     let popup = doc.getElementById("pilot-notification-popup");
+    let textLabel = doc.getElementById("pilot-notification-text");
+    let titleLabel = doc.getElementById("pilot-notification-title");
+    let icon = doc.getElementById("pilot-notification-icon");
+    let button = doc.getElementById("pilot-notification-submit");
+    let closeBtn = doc.getElementById("pilot-notification-close");
+    let link = doc.getElementById("pilot-notification-link");
+    let checkbox = doc.getElementById("pilot-notification-always-submit-checkbox");
+    let self = this;
+    let buttonChoice = null;
+    let linkChoice = null;
+    let checkBoxChoice = null;
     let anchor;
+
     if (this._anchorToFeedback) {
       /* If we're in the Ffx4Beta version, popups come down from feedback
        * button, but if we're in the standalone extension version, they
@@ -66,69 +78,75 @@ CustomNotificationManager.prototype = {
       anchor = doc.getElementById("pilot-notifications-button");
       popup.setAttribute("class", "tail-down");
     }
-    let textLabel = doc.getElementById("pilot-notification-text");
-    let titleLabel = doc.getElementById("pilot-notification-title");
-    let icon = doc.getElementById("pilot-notification-icon");
-    let submitBtn = doc.getElementById("pilot-notification-submit");
-    let closeBtn = doc.getElementById("pilot-notification-close");
-    let link = doc.getElementById("pilot-notification-link");
-    let alwaysSubmitCheckbox =
-      doc.getElementById("pilot-notification-always-submit-checkbox");
-    let self = this;
 
-    popup.setAttribute("noautohide", !(options.fragile));
-    if (options.title) {
-      titleLabel.setAttribute("value", options.title);
+    popup.setAttribute("noautohide", !(features.fragile));
+    if (features.title) {
+      titleLabel.setAttribute("value", features.title);
     }
     while (textLabel.lastChild) {
       textLabel.removeChild(textLabel.lastChild);
     }
-    if (options.text) {
-      textLabel.appendChild(doc.createTextNode(options.text));
+    if (features.text) {
+      textLabel.appendChild(doc.createTextNode(features.text));
     }
-    if (options.iconClass) {
+    if (features.iconClass) {
       // css will set the image url based on the class.
-      icon.setAttribute("class", options.iconClass);
+      icon.setAttribute("class", features.iconClass);
     }
 
-    if (options.submitLabel && options.alwaysSubmitLabel) {
-      alwaysSubmitCheckbox.removeAttribute("hidden");
-      alwaysSubmitCheckbox.setAttribute("label", options.alwaysSubmitLabel);
+    /* Go through the specified choices and figure out which one to turn into a link, which one
+     * (if any) to turn into a button, and which one (if any) to turn into a check box. */
+    for (let i = 0; i < choices.length; i++) {
+      switch(choices[i].customUiType) {
+      case "button":
+        buttonChoice = choices[i];
+        break;
+      case "link":
+        linkChoice = choices[i];
+        break;
+      case "checkbox":
+        checkBoxChoice = choices[i];
+        break;
+      }
+    }
+    // Create check box if specified:
+    if (checkBoxChoice) {
+      checkbox.removeAttribute("hidden");
+      checkbox.setAttribute("label", checkBoxChoice.label);
     } else {
-      alwaysSubmitCheckbox.setAttribute("hidden", true);
+      checkbox.setAttribute("hidden", true);
     }
 
-    if (options.submitLabel) {
-      submitBtn.setAttribute("label", options.submitLabel);
-      submitBtn.onclick = function(event) {
+    // Create button if specified:
+    if (buttonChoice) {
+      button.setAttribute("label", buttonChoice.label);
+      button.onclick = function(event) {
         if (event.button == 0) {
-          if (alwaysSubmitCheckbox.checked && options.alwaysSubmitCallback) {
-            options.alwaysSubmitCallback();
+          if (checkbox.checked && checkBoxChoice) {
+            checkBoxChoice.callback();
           }
-          options.submitCallback();
+          buttonChoice.callback();
           self.hideNotification(window);
-          if (options.closeCallback) {
-            options.closeCallback();
+          if (features.closeCallback) {
+            features.closeCallback();
           }
         }
       };
-    }
-    if (options.submitLabel) {
-      submitBtn.removeAttribute("hidden");
+      button.removeAttribute("hidden");
     } else {
-      submitBtn.setAttribute("hidden", true);
+      button.setAttribute("hidden", true);
     }
 
     // Create the link if specified:
-    if (options.moreInfoLabel) {
-      link.setAttribute("value", options.moreInfoLabel);
+    if (linkChoice) {
+      link.setAttribute("value", linkChoice.label);
       link.setAttribute("class", "notification-link");
       link.onclick = function(event) {
         if (event.button == 0) {
-          options.moreInfoCallback();
+          linkChoice.callback();
           self.hideNotification(window);
-          if (options.closeCallback) {
-            options.closeCallback();
+          if (features.closeCallback) {
+            features.closeCallback();
           }
         }
       };
@@ -139,8 +157,8 @@ CustomNotificationManager.prototype = {
 
     closeBtn.onclick = function() {
       self.hideNotification(window);
-      if (options.closeCallback) {
-        options.closeCallback();
+      if (features.closeCallback) {
+        features.closeCallback();
       }
     };
 
@@ -173,13 +191,7 @@ PopupNotificationManager.prototype = {
           createBundle("chrome://testpilot/locale/main.properties");
   },
 
-  _getLocalizedAccessKey: function(command) {
-    return this._stringBundle.GetStringFromName("testpilot.notification.accessKey." + command);
-  },
-
-  showNotification: function TP_NewNotfn_showNotification(window, options) {
-    let additionalOptions = [];
-    let defaultOption;
+  showNotification: function TP_NewNotfn_showNotification(window, features, choices) {
     let self = this;
     let tabbrowser = window.getBrowser();
     let panel = window.document.getElementById("testpilot-notification-popup");
@@ -192,73 +204,20 @@ PopupNotificationManager.prototype = {
     // can we do that without the window ref?
     this._pn = new this._popupModule.PopupNotifications(tabbrowser, panel, iconBox);
 
-    let submitOption = {label: options.submitLabel,
-                        accessKey: self._getLocalizedAccessKey("submit"),
-                        callback: function() {
-                          options.submitCallback();
-                          self.hideNotification();
-                        }};
-    let moreInfoOption = {label: options.moreInfoLabel,
-                          accessKey: self._getLocalizedAccessKey("moreInfo"),
-                          callback: function() {
-                            options.moreInfoCallback();
-                            self.hideNotification();
-                          }};
-
-    if (submitOption.label && moreInfoOption.label) {
-      // If both provided, then submit is default button, moreInfo is in the menu:
-      defaultOption = submitOption;
-      additionalOptions.push(moreInfoOption);
-    } else if (moreInfoOption.label) {
-      // If submit not provided, use the 'more info' as the default button.
-      defaultOption = moreInfoOption;
-    } else {
-      // There must be at least one of submit option and/or moreInfo option.
-      throw "No valid default option specified.";
-    }
-
-    if (options.seeAllStudiesLabel) {
-      additionalOptions.push({ label: options.seeAllStudiesLabel,
-                               accessKey: self._getLocalizedAccessKey("allStudies"),
-                               callback: function() {
-                                 options.seeAllStudiesCallback();
-                                 self.hideNotification();
-                               }});
-
-    }
-
-    if (options.alwaysSubmitLabel) {
-      additionalOptions.push({ label: options.alwaysSubmitLabel,
-                               accessKey: self._getLocalizedAccessKey("alwaysSubmit"),
-                               callback: function() {
-                                 options.alwaysSubmitCallback();
-                                 if (options.submitCallback) {
-                                   options.submitCallback();
-                                 }
-                                 self.hideNotification();
-                               }});
-    }
-
-    if (options.cancelLabel) {
-      additionalOptions.push({ label: options.cancelLabel,
-                               accessKey: self._getLocalizedAccessKey("cancel"),
-                               callback: function() {
-                                 options.cancelCallback();
-                                 self.hideNotification();
-                               }});
-    }
+    let defaultChoice = choices[0];
+    let additionalChoices = choices.slice(1);
 
     this._notifRef = this._pn.show(window.getBrowser().selectedBrowser,
                              "testpilot",
-                             options.text,
+                             features.text,
                              "tp-notification-popup-icon", // All TP notifications use this icon
-                             defaultOption,
-                             additionalOptions,
+                             defaultChoice,
+                             additionalChoices,
                              {persistWhileVisible: true,
                               timeout: 5000,
-                              removeOnDismissal: options.fragile,
-                              title: options.title,
-                              iconClass: options.iconClass,
+                              removeOnDismissal: features.fragile,
+                              title: features.title,
+                              iconClass: features.iconClass,
                               closeButtonFunc: function() {
                                 self.hideNotification();
                               },
@@ -267,8 +226,8 @@ PopupNotificationManager.prototype = {
                                  * and will be called no matter whether the notification is closed via
                                  * close button or a menu button item.
                                  */
-                                if (stateChange == "removed" && options.closeCallback) {
-                                  options.closeCallback();
+                                if (stateChange == "removed" && features.closeCallback) {
+                                  features.closeCallback();
                                 }
                               }}); // should make it not disappear for at least 5s?
     // See http://mxr.mozilla.org/mozilla-central/source/toolkit/content/PopupNotifications.jsm
