@@ -342,7 +342,7 @@ let TestPilotSetup = {
     window.TestPilotWindowUtils.openChromeless(url);
   },
 
-  _submitFromNotification: function(task) {
+  _submitFromNotification: function(win, task) {
     let self = this;
     task.upload( function(success) {
       if (success) {
@@ -354,7 +354,7 @@ let TestPilotSetup = {
         }, [{
           label: self._getStr("testpilot.notification.seeYourData"),
           customUiType: "link",
-          accessKey: self._getStr(todo),
+          accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
           callback: function() { task.loadPage(); }
         }]);
       } else {
@@ -376,7 +376,7 @@ let TestPilotSetup = {
       {label: self._getStr("testpilot.submit"),
        customUiType: "button",
        accessKey: self._getStr("testpilot.notification.accessKey.submit"),
-       callback: function() { self._submitFromNotification(task); }
+       callback: function() { self._submitFromNotification(win, task); }
       },
 
       {label: self._getStr("testpilot.notification.seeYourData"),
@@ -394,8 +394,8 @@ let TestPilotSetup = {
       {label: self._getStr("testpilot.notification.alwaysSubmitLabel"),
        customUiType: "checkbox",
        accessKey: self._getStr("testpilot.notification.accessKey.alwaysSubmit"),
-       alwaysSubmitCallback: function() { self._submitFromNotification(task);
-                                          self._prefs.setValue(ALWAYS_SUBMIT_DATA, true); }
+       callback: function() { self._submitFromNotification(win, task);
+                              self._prefs.setValue(ALWAYS_SUBMIT_DATA, true); }
       },
 
       {label: self._getStr("testpilot.notification.cancelLabel"), // TODO NEW FEATURE
@@ -465,7 +465,7 @@ let TestPilotSetup = {
                 callback: function() { self._prefs.setValue(POPUP_SHOW_ON_NEW, false);} // TODO NEW FEATURE
                },
 
-               {cancelLabel: self._getStr("testpilot.notification.cancelLabel"), // TODO NEW FEATURE
+               {label: self._getStr("testpilot.notification.cancelLabel"), // TODO NEW FEATURE
                 accessKey: self._getStr("testpilot.notification.accessKey.cancel"),
                 callback: function() { task.optOut(null, null); }
               }
