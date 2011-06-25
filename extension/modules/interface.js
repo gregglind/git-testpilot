@@ -165,7 +165,7 @@ var TestPilotUIBuilder = {
     /* Overlay Feedback XUL if we're in the beta update channel, Test Pilot XUL otherwise, and
      * call buildFeedbackInterface() or buildTestPilotInterface(). */
     if (this.channelUsesFeedback()) {
-      window.document.loadOverlay("chrome://testpilot/content/feedback-browser.xul");
+      window.document.loadOverlay("chrome://testpilot/content/feedback-browser.xul", null);
       this.buildFeedbackInterface(window);
     } else {
       /* Overlay Test Pilot XUL -- that means the base overlay tp-browser.xul to make the menu,
@@ -176,8 +176,14 @@ var TestPilotUIBuilder = {
       let notfnOverlay = (this.hasDoorhangerNotifications() ?
                           "chrome://testpilot/content/tp-browser-popupNotifications.xul" :
                           "chrome://testpilot/content/tp-browser-customNotifications.xul");
-      window.document.loadOverlay("chrome://testpilot/content/tp-browser.xul");
-      window.document.loadOverlay(notfnOverlay);
+      /* Trying to start one overlay before the other is done caues problems, so use an observer
+       * to make the 2nd overlay wait until the 1st is done */
+      window.document.loadOverlay("chrome://testpilot/content/tp-browser.xul",
+                                  {observe: function(subject, topic, data) {
+                                     if (topic == "xul-overlay-merged") {
+                                       window.document.loadOverlay(notfnOverlay, null);
+                                     }
+                                    }});
       this.buildTestPilotInterface(window);
     }
   },
