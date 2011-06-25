@@ -196,6 +196,8 @@ PopupNotificationManager.prototype = {
     let tabbrowser = window.getBrowser();
     let panel = window.document.getElementById("testpilot-notification-popup");
     let iconBox = window.document.getElementById("tp-notification-popup-box");
+    let defaultChoice = null;
+    let additionalChoices = [];
 
     // hide any existing notification so we don't get a weird stack
     this.hideNotification();
@@ -204,8 +206,24 @@ PopupNotificationManager.prototype = {
     // can we do that without the window ref?
     this._pn = new this._popupModule.PopupNotifications(tabbrowser, panel, iconBox);
 
-    let defaultChoice = choices[0];
-    let additionalChoices = choices.slice(1);
+    /* Add hideNotification() calls to the callbacks of each choice -- the client code shouldn't
+     * have to worry about hiding the notification in its callbacks.*/
+    for (let i = 0; i < choices.length; i++) {
+      let choice = choices[i];
+      let choiceWithHide = {
+        label: choice.label,
+        accessKey: choice.accessKey,
+        callback: function() {
+          self.hideNotification();
+          choice.callback();
+        }};
+      // Take the first one to be the default choice:
+      if (i == 0) {
+        defaultChoice = choiceWithHide;
+      } else {
+        additionalChoices.push(choiceWithHide);
+      }
+    }
 
     this._notifRef = this._pn.show(window.getBrowser().selectedBrowser,
                              "testpilot",
