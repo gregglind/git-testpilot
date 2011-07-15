@@ -337,26 +337,23 @@ let TestPilotSetup = {
     this.taskList.push(testPilotTask);
   },
 
-  _openChromeless: function TPS__openChromeless(url) {
-    let window = this._getFrontBrowserWindow();
-    window.TestPilotWindowUtils.openChromeless(url);
-  },
-
   _submitFromNotification: function(win, task) {
     let self = this;
     task.upload( function(success) {
       if (success) {
-        self._notifier.showNotification(win, {
+        let features = {
           text: self._getStr("testpilot.notification.thankYouForUploadingData.message"),
           title: self._getStr("testpilot.notification.thankYouForUploadingData"),
           iconClass:"study-submitted",
           fragile: true
-        }, [{
-          label: self._getStr("testpilot.notification.seeYourData"),
+        };
+        let actions = [{
+          label: self._getStr("testpilot.notification.seeYourData.label"),
           customUiType: "link",
-          accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
+          accessKey: self._getStr("testpilot.notification.seeYourData.accesskey"),
           callback: function() { task.loadPage(); }
-        }]);
+        }];
+        self._notifier.showNotification(win, features, actions);
       } else {
         // TODO any point in showing an error message here?
       } }
@@ -366,43 +363,47 @@ let TestPilotSetup = {
   _showSubmitNotification: function(task) {
     let win = this._getFrontBrowserWindow();
     let self = this;
-
-    this._notifier.showNotification(win, {
+    let features = {
       text: self._stringBundle.formatStringFromName(
         "testpilot.notification.readyToSubmit.message", [task.title], 1),
       title: self._getStr("testpilot.notification.readyToSubmit"),
       iconClass: "study-finished"
-      }, [
-      {label: self._getStr("testpilot.submit"),
-       customUiType: "button",
-       accessKey: self._getStr("testpilot.notification.accessKey.submit"),
-       callback: function() { self._submitFromNotification(win, task); }
-      },
-
-      {label: self._getStr("testpilot.notification.seeYourData"),
-       customUiType: "link",
-       accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
-       callback: function() { task.loadPage(); }
-      },
-
-      {label: self._getStr("testpilot.notification.seeAllStudiesLabel"),  // TODO NEW FEATURE
-       accessKey: self._getStr("testpilot.notification.accessKey.allStudies"),
-       callback: function() {
+    };
+    let actions = [];
+    actions.push({
+      label: self._getStr("testpilot.submit"),
+      customUiType: "button",
+      accessKey: self._getStr("testpilot.notification.submit.accesskey"),
+      callback: function() { self._submitFromNotification(win, task); }
+    });
+    actions.push({
+      label: self._getStr("testpilot.notification.seeYourData.label"),
+      customUiType: "link",
+      accessKey: self._getStr("testpilot.notification.seeYourData.accesskey"),
+      callback: function() { task.loadPage(); }
+    });
+    actions.push({
+      label: self._getStr("testpilot.notification.seeAllStudies.label"),
+      accessKey: self._getStr("testpilot.notification.seeAllStudies.accesskey"),
+      callback: function() {
          self._getFrontBrowserWindow().TestPilotWindowUtils.openAllStudiesWindow();
-      }},
-
-      {label: self._getStr("testpilot.notification.alwaysSubmitLabel"),
-       customUiType: "checkbox",
-       accessKey: self._getStr("testpilot.notification.accessKey.alwaysSubmit"),
-       callback: function() { self._submitFromNotification(win, task);
-                              self._prefs.setValue(ALWAYS_SUBMIT_DATA, true); }
-      },
-
-      {label: self._getStr("testpilot.notification.cancelLabel"), // TODO NEW FEATURE
-       accessKey: self._getStr("testpilot.notification.accessKey.cancel"),
-       callback: function() { task.optOut(null, null); }
-      }]
-    );
+      }
+    });
+    actions.push({
+      label: self._getStr("testpilot.notification.cancel.label"),
+      accessKey: self._getStr("testpilot.notification.cancel.accesskey"),
+      callback: function() { task.optOut(null, null); }
+    });
+    actions.push({
+      label: self._getStr("testpilot.notification.alwaysSubmit.label"),
+      customUiType: "checkbox",
+      accessKey: self._getStr("testpilot.notification.alwaysSubmit.accesskey"),
+      callback: function() {
+        self._submitFromNotification(win, task);
+        self._prefs.setValue(ALWAYS_SUBMIT_DATA, true);
+      }
+    });
+    this._notifier.showNotification(win, features, actions);
   },
 
   _notifyUserOfTasks: function TPS__notifyUser() {
@@ -434,7 +435,7 @@ let TestPilotSetup = {
         if (task.status == TaskConstants.STATUS_PENDING ||
             task.status == TaskConstants.STATUS_NEW) {
           if (task.taskType == TaskConstants.TYPE_EXPERIMENT) {
-            this._notifier.showNotification(win, {
+            let features = {
 	      text: self._stringBundle.formatStringFromName(
 		"testpilot.notification.newTestPilotStudy.pre.message",
 		[task.title], 1),
@@ -449,40 +450,47 @@ let TestPilotSetup = {
                   task.changeStatus(TaskConstants.STATUS_STARTING, true);
                   TestPilotSetup.reloadRemoteExperiments();
                 }
-              }},
-              [{label: self._getStr("testpilot.moreInfo"),
-                customUiType: "link",
-                accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
-                callback: function() { task.loadPage(); }},
-
-               {label: self._getStr("testpilot.notification.seeAllStudiesLabel"), // TODO NEW FEATURE
-                accessKey: self._getStr("testpilot.notification.accessKey.allStudies"),
-                callback: function() {win.TestPilotWindowUtils.openAllStudiesWindow();}
-               },
-
-               {label: self._getStr("testpilot.notification.dontShowNewLabel"),
-                accessKey: self._getStr("testpilot.notification.accessKey.alwaysSubmit"),
-                callback: function() { self._prefs.setValue(POPUP_SHOW_ON_NEW, false);} // TODO NEW FEATURE
-               },
-
-               {label: self._getStr("testpilot.notification.cancelLabel"), // TODO NEW FEATURE
-                accessKey: self._getStr("testpilot.notification.accessKey.cancel"),
-                callback: function() { task.optOut(null, null); }
               }
-              ]);
+            };
+            let actions = [];
+            actions.push({
+              label: self._getStr("testpilot.moreInfo"),
+              customUiType: "link",
+              accessKey: self._getStr("testpilot.notification.moreInfo.accesskey"),
+              callback: function() { task.loadPage(); }
+            });
+            actions.push({
+              label: self._getStr("testpilot.notification.seeAllStudies.label"),
+              accessKey: self._getStr("testpilot.notification.seeAllStudies.accesskey"),
+              callback: function() {win.TestPilotWindowUtils.openAllStudiesWindow();}
+            });
+            actions.push({
+              label: self._getStr("testpilot.notification.dontShowNew.label"),
+              accessKey: self._getStr("testpilot.notification.dontShowNew.accesskey"),
+              callback: function() { self._prefs.setValue(POPUP_SHOW_ON_NEW, false);}
+            });
+            actions.push({
+              label: self._getStr("testpilot.notification.cancel.label"),
+              accessKey: self._getStr("testpilot.notification.cancel.accesskey"),
+              callback: function() { task.optOut(null, null); }
+            });
+            this._notifier.showNotification(win, features, actions);
             return;
           } else if (task.taskType == TaskConstants.TYPE_SURVEY) {
-            this._notifier.showNotification(win, {
+            let features = {
 	      text: self._stringBundle.formatStringFromName(
 		"testpilot.notification.newTestPilotSurvey.message",
 		[task.title], 1),
               title: self._getStr("testpilot.notification.newTestPilotSurvey"),
-	      iconClass: "new-study"},
-              [{label: self._getStr("testpilot.takeSurvey"),
-                customUiType: "button",
-                accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
-	        callback: function() { task.loadPage(); }}]
-            );
+	      iconClass: "new-study"
+            };
+            let actions = [{
+              label: self._getStr("testpilot.takeSurvey"),
+              customUiType: "button",
+              accessKey: self._getStr("testpilot.notification.takeSurvey.accesskey"),
+	      callback: function() { task.loadPage(); }
+            }];
+            this._notifier.showNotification(win, features, actions);
             task.changeStatus(TaskConstants.STATUS_IN_PROGRESS, true);
             return;
           }
@@ -496,18 +504,21 @@ let TestPilotSetup = {
         task = this.taskList[i];
         if (task.taskType == TaskConstants.TYPE_RESULTS &&
             task.status == TaskConstants.STATUS_NEW) {
-              self._notifier.showNotification( win, {
+              let features = {
 	        text: self._stringBundle.formatStringFromName(
 	          "testpilot.notification.newTestPilotResults.message",
 	          [task.title], 1),
                 title: self._getStr("testpilot.notification.newTestPilotResults"),
-	        iconClass: "new-results"},
-                [{label: self._getStr("testpilot.moreInfo"),
-                  customUiType: "link",
-                  accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
-	          callback: function() { task.loadPage(); }}]
-               );
-                // TODO have a "don't tell me about these anymore" option?
+	        iconClass: "new-results"
+              };
+              let actions = [{
+                label: self._getStr("testpilot.moreInfo"),
+                customUiType: "link",
+                accessKey: self._getStr("testpilot.notification.moreInfo.accesskey"),
+	        callback: function() { task.loadPage(); }
+              }];
+              self._notifier.showNotification(win, features, actions);
+              // TODO have a "don't tell me about these anymore" option?
               /* Having shown the notification, advance the status of the
                * results, so that this notification won't be shown again */
               task.changeStatus(TaskConstants.STATUS_ARCHIVED, true);
@@ -537,17 +548,20 @@ let TestPilotSetup = {
 
   _onTaskDataAutoSubmitted: function(subject, data) {
     let task = subject;
-    this._notifier.showNotification( win, {
+    let features = {
       text: self._stringBundle.formatStringFromName(
 	"testpilot.notification.autoUploadedData.message",
 	[subject.title], 1),
       title: self._getStr("testpilot.notification.autoUploadedData"),
-      iconClass: "study-submitted"},
-      [{label: self._getStr("testpilot.notification.seeYourData"),
-        customUiType: "link",
-        accessKey: self._getStr("testpilot.notification.accessKey.moreInfo"),
-        callback: function() { task.loadPage(); }
-       }]);
+      iconClass: "study-submitted"
+    };
+    let actions = [{
+      label: self._getStr("testpilot.notification.seeYourData.label"),
+      customUiType: "link",
+      accessKey: self._getStr("testpilot.notification.seeYourData.accesskey"),
+      callback: function() { task.loadPage(); }
+    }];
+    this._notifier.showNotification(win, features, actions);
   },
 
   getVersion: function TPS_getVersion(callback) {

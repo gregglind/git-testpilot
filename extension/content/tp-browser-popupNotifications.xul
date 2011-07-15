@@ -13,7 +13,7 @@
       <image id="tp-notification-popup-icon" class="notification-anchor-icon" role="button"/>
     </box>
     <panel id="testpilot-notification-popup" type="arrow" position="after_start"
-           hidden="true" orient="vertical">
+           hidden="true" orient="vertical" role="alert">
     </panel>
   </toolbar>
 </overlay>

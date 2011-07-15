@@ -1,6 +1,4 @@
 <?xml version="1.0"?>
-<!-- Remember to keep this up to date with the changes to base binding 
-     at http://hg.mozilla.org/mozilla-central/file/tip/toolkit/content/widgets/notification.xml-->
 
 <!DOCTYPE bindings [
 <!ENTITY % notificationDTD SYSTEM "chrome://global/locale/notification.dtd">
@@ -14,6 +12,9 @@
 
   <binding id="testpilot-notification"
            extends="chrome://global/content/bindings/notification.xml#popup-notification">
+
+    <!-- Remember to keep this up to date with the changes to base binding 
+         at http://hg.mozilla.org/mozilla-central/file/tip/toolkit/content/widgets/notification.xml-->
     <content align="start">
       <xul:image class="popup-notification-icon" anonid="notification-icon"
                  xbl:inherits="popupid"/>
@@ -49,7 +50,7 @@
     <implementation>
       <constructor><![CDATA[
         this.title.value = this.notification.options.title;
-        this.icon.setAttribute("class", "popup-notification-icon " + this.notification.options.iconClass);
+        this.icon.classList.add(this.notification.options.iconClass);
         this.closebutton.addEventListener("command",
                                           this.notification.options.closeButtonFunc,
                                           false);

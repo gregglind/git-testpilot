@@ -71,7 +71,7 @@ var TestPilotWelcomePage = {
     /* Use slightly different wording on this page depending on whether
      * the user has the version with the doorhanger notifications (Firefox 4.0+)
      * or not. */
-    let doorhangerUI = TestPilotUIBuilder.hasDoorhangerNotifications();
+    let doorhangerUI = TestPilotUIBuilder._hasDoorhangerNotifications;
     let map = [
       { id: "page-title", stringKey: "testpilot.fullBrandName" },
       { id: "thank-you-text",

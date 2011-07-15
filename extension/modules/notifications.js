@@ -48,8 +48,9 @@ const Cu = Components.utils;
 
 /* CustomNotificationManager: the one where notifications
  * come up from the Test Pilot icon in the addon bar.  For Firefox 3.6. */
-function CustomNotificationManager(anchorToFeedbackButton) {
-  this._anchorToFeedback = anchorToFeedbackButton;
+function CustomNotificationManager(anchorId, tailIsUp) {
+  this._anchorId = anchorId;
+  this._tailIsUp = tailIsUp;
 }
 CustomNotificationManager.prototype = {
   showNotification: function TP_OldNotfn_showNotification(window, features, choices) {
@@ -66,16 +67,10 @@ CustomNotificationManager.prototype = {
     let buttonChoice = null;
     let linkChoice = null;
     let checkBoxChoice = null;
-    let anchor;
 
-    if (this._anchorToFeedback) {
-      /* If we're in the Ffx4Beta version, popups come down from feedback
-       * button, but if we're in the standalone extension version, they
-       * come up from status bar icon. */
-      anchor = doc.getElementById("feedback-menu-button");
+    if (this._tailIsUp) {
       popup.setAttribute("class", "tail-up");
     } else {
-      anchor = doc.getElementById("pilot-notifications-button");
       popup.setAttribute("class", "tail-down");
     }
 
@@ -165,7 +160,8 @@ CustomNotificationManager.prototype = {
     // Show the popup:
     popup.hidden = false;
     popup.setAttribute("open", "true");
-    popup.openPopup( anchor, "after_end");
+    let anchorElement = window.document.getElementById(this._anchorId);
+    popup.openPopup(anchorElement, "after_end");
   },
 
   hideNotification: function TP_OldNotfn_hideNotification(window) {
@@ -176,7 +172,7 @@ CustomNotificationManager.prototype = {
 };
 
 // For Fx 4.0 + , uses the built-in doorhanger notification system (but with my own anchor icon)
-function PopupNotificationManager(anchorToFeedbackButton) {
+function PopupNotificationManager() {
   /* In the future, we may want to anchor these to the Feedback button if present,
    * but for now that option is unimplemented. */
   this._popupModule = {};
@@ -184,13 +180,6 @@ function PopupNotificationManager(anchorToFeedbackButton) {
   this._pn = null;
 }
 PopupNotificationManager.prototype = {
-  get _stringBundle() {
-    delete this._stringBundle;
-    return this._stringBundle = Cc["@mozilla.org/intl/stringbundle;1"].
-        getService(Ci.nsIStringBundleService).
-          createBundle("chrome://testpilot/locale/main.properties");
-  },
-
   showNotification: function TP_NewNotfn_showNotification(window, features, choices) {
     let self = this;
     let tabbrowser = window.getBrowser();
@@ -202,8 +191,7 @@ PopupNotificationManager.prototype = {
     // hide any existing notification so we don't get a weird stack
     this.hideNotification();
 
-    // TODO this is recreating PopupNotifications every time... should create once and store ref, but
-    // can we do that without the window ref?
+    // Create notifications object for window
     this._pn = new this._popupModule.PopupNotifications(tabbrowser, panel, iconBox);
 
     /* Add hideNotification() calls to the callbacks of each choice -- the client code shouldn't
@@ -225,14 +213,13 @@ PopupNotificationManager.prototype = {
       }
     }
 
-    this._notifRef = this._pn.show(window.getBrowser().selectedBrowser,
+    this._notifRef = this._pn.show(tabbrowser.selectedBrowser,
                              "testpilot",
                              features.text,
                              "tp-notification-popup-icon", // All TP notifications use this icon
                              defaultChoice,
                              additionalChoices,
                              {persistWhileVisible: true,
-                              timeout: 5000,
                               removeOnDismissal: features.fragile,
                               title: features.title,
                               iconClass: features.iconClass,
@@ -247,7 +234,8 @@ PopupNotificationManager.prototype = {
                                 if (stateChange == "removed" && features.closeCallback) {
                                   features.closeCallback();
                                 }
-                              }}); // should make it not disappear for at least 5s?
+                                self._notifRef = null;
+                              }});
     // See http://mxr.mozilla.org/mozilla-central/source/toolkit/content/PopupNotifications.jsm
   },
 
