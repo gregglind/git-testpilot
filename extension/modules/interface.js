@@ -141,16 +141,6 @@ var TestPilotUIBuilder = {
     return (channel == "beta") || (channel == "betatest") || (channel == "aurora");
   },
 
-  appVersionIsFinal: function() {
-    // Return true iff app version >= 4.0 AND there is no "beta" or "rc" in version string.
-    if (this.__comparator.compare(this._appVersion, "4.0") >= 0) {
-      if (this._appVersion.indexOf("b") == -1 && this._appVersion.indexOf("rc") == -1) {
-        return true;
-      }
-    }
-    return false;
-  },
-
   hasDoorhangerNotifications: function() {
     try {
       let popupModule = {};

@@ -290,7 +290,9 @@ var stringBundle;
     let task = TestPilotSetup.getTaskById(eid);
     task.optOut(reason, function(success) {
       // load the you-are-canceleed page.
-      window.location = "chrome://testpilot/content/status.html?eid=" + eid;
+      $("#quit-ui").slideUp();
+      $("#main-experiment-ui").slideDown();
+      onStatusPageLoad();
     });
 
     // If opt-out-forever checkbox is checked, opt out forever!
@@ -364,23 +366,25 @@ var stringBundle;
   function loadExperimentPage() {
     Components.utils.import("resource://testpilot/modules/setup.js");
     Components.utils.import("resource://testpilot/modules/tasks.js");
-    var contentDiv = document.getElementById("experiment-specific-text");
-    var dataPrivacyDiv = document.getElementById("data-privacy-text");
+    var contentDiv = $("#experiment-specific-text");
+    var dataPrivacyDiv = $("#data-privacy-text");
     // Get experimentID from the GET args of page
     var eid = getUrlParam("eid");
     var experiment = TestPilotSetup.getTaskById(eid);
     if (!experiment) {
       // Possible that experiments aren't done loading yet.  Try again in
       // a few seconds.
-      contentDiv.innerHTML =
-        stringBundle.GetStringFromName("testpilot.statusPage.loading");
+      contentDiv.html(stringBundle.GetStringFromName("testpilot.statusPage.loading"));
       window.setTimeout(function() { loadExperimentPage(); }, 2000);
       return;
     }
 
+    // Fill in "opt out" and "raw data" links.
+    $("#raw-data-link").attr("href", "raw-data.html?eid=" + eid);
+
     // Let the experiment fill in its web content (asynchronous)
     experiment.getWebContent(function(webContent) {
-      contentDiv.innerHTML = webContent;
+      contentDiv.html(webContent);
 
       // Metadata and start/end date should be filled in for every experiment:
       showMetaData();
@@ -397,8 +401,8 @@ var stringBundle;
 
     experiment.getDataPrivacyContent(function(dataPrivacyContent) {
       if (dataPrivacyContent && dataPrivacyContent.length > 0) {
-        dataPrivacyDiv.innerHTML = dataPrivacyContent;
-        dataPrivacyDiv.removeAttribute("hidden");
+        dataPrivacyDiv.html(dataPrivacyContent);
+        dataPrivacyDiv.removeAttr("hidden");
       }
     });
   }
@@ -410,7 +414,20 @@ var stringBundle;
     loadExperimentPage();
   }
 
+  function toggleSection(id) {
+    let div = $("#" + id + "-text");
+    div.slideToggle();
+    let button = $("#" + id + "-button");
+    if (button.html() == "Hide") {
+      button.html("Show");
+    } else {
+      button.html("Hide");
+    }
+  }
+
   function setStrings(pageType) {
+    Components.utils.import("resource://gre/modules/Services.jsm");
+
     stringBundle =
       Components.classes["@mozilla.org/intl/stringbundle;1"].
         getService(Components.interfaces.nsIStringBundleService).
@@ -452,7 +469,48 @@ var stringBundle;
     mapLength = map.length;
     for (let i = 0; i < mapLength; i++) {
       let entry = map[i];
-      document.getElementById(entry.id).innerHTML =
-        stringBundle.GetStringFromName(entry.stringKey);
+      let elem = document.getElementById(entry.id);
+      if (!elem) {
+        Services.console.logStringMessage("No elem as " + entry.id +".\n");
+        continue;
+      }
+      elem.innerHTML = stringBundle.GetStringFromName(entry.stringKey);
     }
   }
+
+function showDbContentsHtml() {
+  Components.utils.import("resource://testpilot/modules/setup.js");
+  var experimentId = getUrlParam("eid");
+  var experiment = TestPilotSetup.getTaskById(experimentId);
+  var dataStore = experiment.dataStore;
+  var table = document.getElementById("raw-data-table");
+  var columnNames = dataStore.getHumanReadableColumnNames();
+  var propertyNames = dataStore.getPropertyNames();
+
+  $("title").html("Raw Data For " + experiment.title + " Study");
+
+  var headerRow = $("#raw-data-header-row");
+
+  var i, j;
+  for (j = 0; j < columnNames.length; j++) {
+    headerRow.append($("<th></th>").html(columnNames[j]));
+  }
+
+  dataStore.getAllDataAsJSON(true, function(rawData) {
+    // Convert each object in the JSON into a row of the table.
+    for (i = 0; i < rawData.length; i++) {
+      var row = $("<tr></tr>");
+      for (j = 0; j < columnNames.length; j++) {
+        row.append($("<td></td>").html(rawData[i][propertyNames[j]]));
+      }
+      $("#raw-data-table").append(row);
+    }
+  });
+
+}
+
+function showQuitUi() {
+  $('#quit-ui').slideDown();
+  $("#main-experiment-ui").slideUp();
+  onQuitPageLoad();
+}
