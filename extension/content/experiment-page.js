@@ -79,8 +79,7 @@ var stringBundle;
       stringBundle.GetStringFromName("testpilot.statusPage.uploadingData");
     task.upload( function(success) {
       if (success) {
-        window.location =
-	  "chrome://testpilot/content/status.html?eid=" + eid;
+        onStatusPageLoad();
       } else {
         // Replace 'now uploading' message
         let errorParagraph = document.createElement("p");

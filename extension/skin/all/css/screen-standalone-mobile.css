@@ -36,6 +36,9 @@ button {font-size: 18px;}
             text-decoration: none;
         }
 
+        h2 a {font-size: 24px;}
+        h1 a {font-size: 28px;}
+
         a:hover, a:active {
             text-decoration: underline;
         }
