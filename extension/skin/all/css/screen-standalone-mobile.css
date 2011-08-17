@@ -1,4 +1,8 @@
 
+.embiggened {
+    font-size: 14px;
+}
+
 .initially-hidden {
     display: none;
 }

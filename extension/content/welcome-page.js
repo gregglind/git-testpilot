@@ -76,15 +76,15 @@ var TestPilotWelcomePage = {
       { id: "page-title", stringKey: "testpilot.fullBrandName" },
       { id: "thank-you-text",
         stringKey: "testpilot.welcomePage.thankYou" },
-      { id: "getting-started-text",
-        stringKey: "testpilot.welcomePage.gettingStarted" },
+      /*{ id: "getting-started-text",
+        stringKey: "testpilot.welcomePage.gettingStarted" },*/
       { id: "please-take-text",
         stringKey: "testpilot.welcomePage.pleaseTake" },
       { id: "background-survey-text",
         stringKey: "testpilot.welcomePage.backgroundSurvey" },
       { id: "open-studies-window-link",
         stringKey: "testpilot.welcomePage.clickToOpenStudiesWindow" },
-      { id: "testpilot-addon-text",
+      /*{ id: "testpilot-addon-text",
         stringKey: "testpilot.welcomePage.testpilotAddon" },
       { id: "icon-explanation-text",
         stringKey: (doorhangerUI ? "testpilot.welcomePage.iconExplanation2":
@@ -94,7 +94,13 @@ var TestPilotWelcomePage = {
                     "testpilot.welcomePage.moreIconExplanation")},
       { id: "notification-info-text",
 	stringKey: (doorhangerUI ? "testpilot.welcomePage.notificationInfo2":
-                    "testpilot.welcomePage.notificationInfo")},
+                    "testpilot.welcomePage.notificationInfo")},*/
+      {id: "mobile-addon-explanation-text",
+       stringKey: "testpilot.welcomePage.mobileAddonExplanation"},
+      {id: "mobile-notfn-explanation-text",
+       stringKey: "testpilot.welcomePage.mobileNotfnExplanation"},
+      {id: "mobile-options-explanation-text",
+       stringKey: "testpilot.welcomePage.mobileOptionsExplanation"},
       { id: "privacy-policy-link",
 	stringKey: "testpilot.welcomePage.privacyPolicy" },
       { id: "legal-notices-link",
