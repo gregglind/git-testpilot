@@ -76,25 +76,12 @@ var TestPilotWelcomePage = {
       { id: "page-title", stringKey: "testpilot.fullBrandName" },
       { id: "thank-you-text",
         stringKey: "testpilot.welcomePage.thankYou" },
-      /*{ id: "getting-started-text",
-        stringKey: "testpilot.welcomePage.gettingStarted" },*/
       { id: "please-take-text",
         stringKey: "testpilot.welcomePage.pleaseTake" },
       { id: "background-survey-text",
         stringKey: "testpilot.welcomePage.backgroundSurvey" },
       { id: "open-studies-window-link",
         stringKey: "testpilot.welcomePage.clickToOpenStudiesWindow" },
-      /*{ id: "testpilot-addon-text",
-        stringKey: "testpilot.welcomePage.testpilotAddon" },
-      { id: "icon-explanation-text",
-        stringKey: (doorhangerUI ? "testpilot.welcomePage.iconExplanation2":
-                    "testpilot.welcomePage.iconExplanation")},
-      { id: "icon-explanation-more-text",
-        stringKey: (doorhangerUI ? "testpilot.welcomePage.moreIconExplanation2":
-                    "testpilot.welcomePage.moreIconExplanation")},
-      { id: "notification-info-text",
-	stringKey: (doorhangerUI ? "testpilot.welcomePage.notificationInfo2":
-                    "testpilot.welcomePage.notificationInfo")},*/
       {id: "mobile-addon-explanation-text",
        stringKey: "testpilot.welcomePage.mobileAddonExplanation"},
       {id: "mobile-notfn-explanation-text",
