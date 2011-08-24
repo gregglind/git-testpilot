@@ -2,13 +2,15 @@
 <html>
   <head>
     <title>All Test Pilot Studies</title>
+    <link rel="stylesheet" type="text/css" media="all"
+      href="chrome://testpilot/skin/css/screen-standalone-mobile.css">
     <script src="chrome://testpilot/content/all-studies.js"
              type="application/javascript;version=1.8">
     </script>
   </head>
   <body onload="fillAllStudiesPage();">
-    <h1>All Test Pilot Studies</h1>
-    <p id="still-loading-msg">Loading, please wait...</p>
+    <h1>All Test Pilot Studies</h1>  <!-- TODO l10n -->
+    <p id="still-loading-msg"></p> <!-- TODO l10n -->
     <table id="studies-list"></table>
   </body>
 </html>

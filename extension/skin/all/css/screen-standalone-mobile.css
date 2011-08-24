@@ -16,7 +16,7 @@ html {
 
 body { 
 	font-family: 'Lucida Grande', 'Lucida Sans Unicode', Lucida, Arial, Helvetica, sans-serif;
-	background: #fff
+	background: #fff;
         padding: 0px; 
 	color:#787878;
 	margin: 0 auto;
@@ -26,19 +26,33 @@ body {
     color: #54717b; font-size: 24px; line-height: 24px;font-weight: normal; letter-spacing: -1px
 }
 
-	h1 {color: #3a3a3a; font-size: 28px; font-weight: normal; letter-spacing: -1px}
-	h2 {color: #54717b; font-size: 24px; line-height: 24px;font-weight: normal; letter-spacing: -1px}
-	h3 {color: #54717b; font-size: 18px; line-height: 18px;font-weight: normal; letter-spacing: -1px}
+h1 {color: #3a3a3a; font-size: 28px; font-weight: normal; letter-spacing: -1px; text-align: center}
+h2 {color: #54717b; font-size: 24px; line-height: 24px;font-weight: normal; letter-spacing: -1px}
+h3 {color: #54717b; font-size: 18px; line-height: 18px;font-weight: normal; letter-spacing: -1px}
 	
-	p, ul {font-size: 12px;}
+p, ul {font-size: 12px;}
 
 button {font-size: 18px;}
+
+.underlined-cell {
+    border-bottom-style: solid;
+    border-color: black;
+    border-width: 1px;
+}
+
+td {
+    padding: 1em;
+}
+
+.study-title {
+    font-size: 18pt;
+}
 	
-	a {
-            font-size: 18px;
-            color: #9f423b;
-            text-decoration: none;
-        }
+a {
+    font-size: 18px;
+    color: #9f423b;
+    text-decoration: none;
+}
 
         h2 a {font-size: 24px;}
         h1 a {font-size: 28px;}
