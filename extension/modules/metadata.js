@@ -181,6 +181,17 @@ let MetadataCollector = {
     return this._prefs.getCharPref(UPDATE_CHANNEL_PREF, "");
   },
 
+  getGraphicsAdapter: function MetadataCollector_getHardwareInfo() {
+    // the graphics adapter info tells us a lot about the phone.
+    let gfxInfo = Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo);
+    return gfxInfo.adapterDescription;
+
+    // Other stuff to look at: nsSystemInfo, which has a lot of cool properties like device, manufacturer,
+    // and hardware.
+    // documented here: https://mxr.mozilla.org/mozilla-central/source/xpcom/base/nsSystemInfo.cpp
+    // but how do I get a reference to it from Javascript??
+  },
+
   getMetadata: function MetadataCollector_getMetadata(callback) {
     let self = this;
     self.getTestPilotVersion(function(tpVersion) {
@@ -192,7 +203,8 @@ let MetadataCollector = {
                    operatingSystem: self.getOperatingSystem(),
                    tpVersion: tpVersion,
                    surveyAnswers: self.getSurveyAnswers(),
-                   updateChannel: self.getUpdateChannel()}
+                   updateChannel: self.getUpdateChannel(),
+                   graphicsAdapter: self.getGraphicsAdapter()}
                  );
       });
     });
