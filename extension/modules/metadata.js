@@ -192,20 +192,31 @@ let MetadataCollector = {
     // but how do I get a reference to it from Javascript??
   },
 
+  appendSystemInfo: function MetadataCollector_getMetadata(metadata) {
+    let sysInfo = Components.classes["@mozilla.org/system-info;1"]
+                           .getService(Components.interfaces.nsIPropertyBag2);
+    let enum = sysInfo.enumerator;
+    while (enum.hasMoreElements()) {
+      let property = enum.getNext().QueryInterface(Ci.nsIProperty);
+      metadata[ "sysinfo-" + property.name ] = property.value;
+    }
+    return metadata;
+  },
+
   getMetadata: function MetadataCollector_getMetadata(callback) {
     let self = this;
     self.getTestPilotVersion(function(tpVersion) {
       self.getExtensions(function(extensions) {
-        callback({ extensions: extensions,
-                   accessibilities: self.getAccessibilities(),
-	           location: self.getLocation(),
-	           fxVersion: self.getVersion(),
-                   operatingSystem: self.getOperatingSystem(),
-                   tpVersion: tpVersion,
-                   surveyAnswers: self.getSurveyAnswers(),
-                   updateChannel: self.getUpdateChannel(),
-                   graphicsAdapter: self.getGraphicsAdapter()}
-                 );
+        let metadata = { extensions: extensions,
+                         accessibilities: self.getAccessibilities(),
+	                 location: self.getLocation(),
+	                 fxVersion: self.getVersion(),
+                         operatingSystem: self.getOperatingSystem(),
+                         tpVersion: tpVersion,
+                         surveyAnswers: self.getSurveyAnswers(),
+                         updateChannel: self.getUpdateChannel(),
+                         graphicsAdapter: self.getGraphicsAdapter()};
+        callback(self.appendSystemInfo(metadata));
       });
     });
   }
