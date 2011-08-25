@@ -195,9 +195,8 @@ let MetadataCollector = {
   appendSystemInfo: function MetadataCollector_getMetadata(metadata) {
     let sysInfo = Components.classes["@mozilla.org/system-info;1"]
                            .getService(Components.interfaces.nsIPropertyBag2);
-    let enum = sysInfo.enumerator;
-    while (enum.hasMoreElements()) {
-      let property = enum.getNext().QueryInterface(Ci.nsIProperty);
+    while (sysInfo.enumerator.hasMoreElements()) {
+      let property = sysInfo.enumerator.getNext().QueryInterface(Ci.nsIProperty);
       metadata[ "sysinfo-" + property.name ] = property.value;
     }
     return metadata;
