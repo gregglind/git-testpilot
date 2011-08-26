@@ -25,30 +25,30 @@
              Graph goes in sliding div below; main stuff goes up here.  This will require
              either modifying the API to do separate requests for main html and graph html; or else
              the button to toggle the data display needs to be inside -->
-      
-        <!-- TODO all the hard coded strings in here need to become l10n friendly -->
+
+      <!-- TODO this page needs a link to the All Studies page -->
         <span id="recur-pref"></span>
         <span id="recur-controls"></span>
 
         <p><button id="data-graph-display-button"
                     onclick="toggleSection('data-graph-display');">Hide</button>
-           <span class="section-title">Your Usage Data</span></p>
+           <span class="section-title">Your Usage Data</span></p> <!-- TODO l10n -->
         <div id="data-graph-display-text">
           <div id="data-plot-div" style="width:480px;height:400px"></div>
-          <p><a id="raw-data-link" href="raw-data.html">Raw Data</a></p>
+          <p><a id="raw-data-link" href="raw-data.html">Raw Data</a></p> <!-- TODO l10n -->
         </div>
         <hr/></p>
 
         <p><button id="data-privacy-button"
                     onclick="toggleSection('data-privacy');">Show</button>
-          <span class="section-title">Privacy Info</a>
+          <span class="section-title">Privacy Info</a> <!-- TODO l10n -->
         <div id="data-privacy-text" class="initially-hidden">
         </div>
         <hr/></p>
 
         <p><button id="contact-links-button"
                     onclick="toggleSection('contact-links');">Show</button>
-          <span class="section-title">Contact Us</a>
+          <span class="section-title">Contact Us</a> <!-- TODO l10n -->
         <div id="contact-links-text" class="initially-hidden">
            <ul>
            <li><a id="propose-test-link" href="https://wiki.mozilla.org/Labs/Test_Pilot"></a></li>
@@ -61,7 +61,7 @@
         <hr/></p>
 
         <p><a id="opt-out-link" onclick="showQuitUi();">
-            Quit This Study</a></p>
+            Quit This Study</a></p> <!-- TODO l10n -->
         </div>
         <div id="quit-ui" class="initially-hidden">
           <h2 id="about-quit-title"></h2>
