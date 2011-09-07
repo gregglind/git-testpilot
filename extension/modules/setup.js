@@ -225,9 +225,8 @@ let TestPilotSetup = {
 
       this.getVersion(function() {
         /* Show first run page (in front window) only the first time after install;
-         * Don't show first run page in Feedback UI version. */
-        if (!self._prefs.prefHasUserValue(VERSION_PREF) &&
-           (!TestPilotUIBuilder.channelUsesFeedback())) {
+         * for Fennec, show it regardless of update channel.*/
+        if (!self._prefs.prefHasUserValue(VERSION_PREF)) {
             self._prefs.setCharPref(VERSION_PREF, self.version);
             let browser = self._getFrontBrowserWindow().getBrowser();
             let url = self._prefs.getCharPref(FIRST_RUN_PREF);

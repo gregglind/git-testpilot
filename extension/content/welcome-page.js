@@ -81,7 +81,7 @@ var TestPilotWelcomePage = {
       { id: "background-survey-text",
         stringKey: "testpilot.welcomePage.backgroundSurvey" },
       { id: "open-studies-window-link",
-        stringKey: "testpilot.welcomePage.clickToOpenStudiesWindow" },
+        stringKey: "testpilot.welcomePage.openAllStudiesPage" },
       {id: "mobile-addon-explanation-text",
        stringKey: "testpilot.welcomePage.mobileAddonExplanation"},
       {id: "mobile-notfn-explanation-text",

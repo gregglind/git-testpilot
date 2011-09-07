@@ -60,8 +60,8 @@ var TestPilotWindowUtils;
     },
 
     openAllStudies: function() {
-      if (BrowserUI) { // Fennec only
-        // BrowserUI.newTab will focus on the content area of the new tab
+      // fennec only
+      if ("BrowserUI" in window) {
         BrowserUI.newTab("chrome://testpilot/content/all-studies.html", Browser.selectedTab);
       }
     },
