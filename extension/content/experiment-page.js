@@ -378,6 +378,11 @@ var stringBundle;
       return;
     }
 
+    // hide quit link if study already quit or submitted --
+   if (experiment.status > TaskConstants.STATUS_FINISHED) {
+      $("#opt-out-link").css("display", "none");
+    }
+
     // Fill in "opt out" and "raw data" links.
     $("#raw-data-link").attr("href", "raw-data.html?eid=" + eid);
 
@@ -396,8 +401,10 @@ var stringBundle;
       // Do whatever the experiment's web content wants done on load
       // (Usually drawing a graph) - must be done after innerHTML is set.
       experiment.webContent.onPageLoad(experiment, document, jQuery);
+      // TODO this line, for the mobile heatmap study, is hiding the quit link.  weird.
+      // wait no it doesn't.  It just makes the page too tall and pushes the quit link off the bottom
+      // and I can't scroll down for some reason????  does this happen on the phone too?
     });
-
     experiment.getDataPrivacyContent(function(dataPrivacyContent) {
       if (dataPrivacyContent && dataPrivacyContent.length > 0) {
         dataPrivacyDiv.html(dataPrivacyContent);
