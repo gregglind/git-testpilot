@@ -54,6 +54,15 @@ JarStore.prototype = {
     this._localOverrides = JSON.parse(
       prefs.get("extensions.testpilot.codeOverride", "{}"));
 
+    let remoteOverrideUrl = prefs.get("extensions.testpilot.remoteStudyFileUrl", false);
+    if (remoteOverrideUrl) {
+      let ios = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
+      let remotePath = ios.newURI(remoteOverrideUrl).path;
+      let remoteFilename =  remotePath.split("/").pop();
+      this._remoteOverride = {url: remoteOverrideUrl,
+                              filename: remoteFilename};
+    }
+
     let dir = Cc["@mozilla.org/file/directory_service;1"].
       getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
     dir.append(baseDirectory);
@@ -75,6 +84,31 @@ JarStore.prototype = {
         this._lastModified[jarFile.leafName] = jarFile.lastModifiedTime;
         this._indexJar(jarFile);
       }
+    }
+  },
+
+  // TODO where do we call this from to ensure the remote code override is downloaded
+  // at the same time as the jar files are downloaded.
+  saveRemoteOverrideCode: function(callback) {
+    let self = this;
+    if (this._remoteOverride) {
+      let url = this._remoteOverride.url;
+      let req = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
+              .createInstance( Ci.nsIXMLHttpRequest );
+      req.open('GET', url, true);
+      req.onreadystatechange = function(aEvt) {
+        if (req.readyState == 4) {
+          if (req.status == 200) {
+            self._remoteOverride.code = req.responseText;
+            callback();
+          } else {
+            callback();
+          }
+        }
+      };
+      req.send();
+    } else {
+      callback();
     }
   },
 
@@ -185,6 +219,11 @@ JarStore.prototype = {
       let resolvedPath = this._index[module] + "!" + module + ".js";
       return resolvedPath;
     }
+    if (this._remoteOverride) {
+      if (this._remoteOverride.filename == path) {
+        return this._remoteOverride.url;
+      }
+    }
     return null;
     // must return a path... which gets passed to getFile.
   },
@@ -195,6 +234,12 @@ JarStore.prototype = {
     if (this._localOverrides[path]) {
       let code = this._localOverrides[path];
       return {contents: code};
+    }
+    if (this._remoteOverride) {
+      if (this._remoteOverride.url == path) {
+        let code = this._remoteOverride.code;
+        return {contents: code};
+      }
     }
     let parts = path.split("!");
     let filePath = parts[0];
@@ -228,7 +273,6 @@ JarStore.prototype = {
     return null;
   },
 
-
   getFileModifiedDate: function(filename) {
     // used by remote experiment loader to know whether we have to redownload
     // a thing or not.
@@ -244,6 +288,9 @@ JarStore.prototype = {
     // used by remote experiment loader
     let x;
     let list = [x for (x in this._index)];
+    if (this._remoteOverride) {
+      list.append(this._remoteOverride.filename);
+    }
     return list;
   },
 

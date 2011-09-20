@@ -677,6 +677,9 @@ let TestPilotSetup = {
               // This one must be an experiment.
               let expInfo = experiments[filename].experimentInfo;
               let dsInfo = experiments[filename].dataStoreInfo;
+              for (let x in dsInfo) {
+                logger.info("did export succeed?  dsInfo." + x + " is " + dsInfo[x] );
+              }
               let dataStore = new self._dataStoreModule.ExperimentDataStore(
                 dsInfo.fileName, dsInfo.tableName, dsInfo.columns );
               let webContent = experiments[filename].webContent;
