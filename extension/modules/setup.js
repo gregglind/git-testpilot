@@ -292,8 +292,8 @@ let TestPilotSetup = {
     let self = this;
     this._notifier.showNotification(win, {
       text: self._stringBundle.formatStringFromName(
-        "testpilot.notification.readyToSubmit.message", [task.title], 1),
-      title: self._stringBundle.GetStringFromName("testpilot.notification.readyToSubmit"),
+        "testpilot.notification.mobile.readyToSubmit.message", [task.title], 1),
+      title: self._stringBundle.GetStringFromName("testpilot.notification.mobile.readyToSubmit"),
       iconClass: "study-finished",
       moreInfoLabel: self._stringBundle.GetStringFromName("testpilot.notification.seeYourData"),
       moreInfoCallback: function() { task.loadPage(); },
