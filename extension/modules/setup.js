@@ -39,7 +39,7 @@
 
 EXPORTED_SYMBOLS = ["TestPilotSetup", "POPUP_SHOW_ON_NEW",
                     "POPUP_SHOW_ON_FINISH", "POPUP_SHOW_ON_RESULTS",
-                    "ALWAYS_SUBMIT_DATA", "RUN_AT_ALL_PREF"];
+                    "ALWAYS_SUBMIT_DATA"];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -48,7 +48,6 @@ const Cu = Components.utils;
 const EXTENSION_ID = "testpilot@labs.mozilla.com";
 const VERSION_PREF ="extensions.testpilot.lastversion";
 const FIRST_RUN_PREF ="extensions.testpilot.firstRunUrl";
-const RUN_AT_ALL_PREF = "extensions.testpilot.runStudies";
 const POPUP_SHOW_ON_NEW = "extensions.testpilot.popup.showOnNewStudy";
 const POPUP_SHOW_ON_FINISH = "extensions.testpilot.popup.showOnStudyFinished";
 const POPUP_SHOW_ON_RESULTS = "extensions.testpilot.popup.showOnNewResults";
@@ -153,9 +152,6 @@ let TestPilotSetup = {
     // Only ever run this stuff ONCE, on the first window restore.
     // Should get called by the Test Pilot component.
     try {
-    if (!this._prefs.getBoolPref(RUN_AT_ALL_PREF)) {
-      return;
-    }
 
     // Set up observation for task state changes
     var self = this;

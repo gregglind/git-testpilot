@@ -76,17 +76,6 @@ var TestPilotMenuUtils;
         oldVal = this._prefs.getBoolPref(prefName);
       }
       this._prefs.setBoolPref(prefName, !oldVal);
-
-      // If you turn on or off the global pref, startup or shutdown test pilot
-      // accordingly:
-      if (prefName == RUN_AT_ALL_PREF) {
-        if (oldVal == true) {
-          TestPilotSetup.globalShutdown();
-        }
-        if (oldVal == false) {
-          TestPilotSetup.globalStartup();
-        }
-      }
     },
 
     onPopupShowing: function(event) {
@@ -104,28 +93,6 @@ var TestPilotMenuUtils;
     },
 
     _setMenuLabels: function() {
-      // Make the enable/disable User Studies menu item show the right label
-      // for the current status...
-      let runStudiesToggle = document.getElementById("feedback-menu-enable-studies");
-      if (runStudiesToggle) {
-        let currSetting = this._prefs.getBoolPref(RUN_AT_ALL_PREF);
-
-        let stringBundle = Cc["@mozilla.org/intl/stringbundle;1"].
-          getService(Ci.nsIStringBundleService).
-          createBundle("chrome://testpilot/locale/main.properties");
-
-        if (currSetting) {
-          runStudiesToggle.setAttribute("label",
-            stringBundle.GetStringFromName("testpilot.turnOff"));
-        } else {
-          runStudiesToggle.setAttribute("label",
-            stringBundle.GetStringFromName("testpilot.turnOn"));
-        }
-      }
-
-      let studiesMenuItem = document.getElementById("feedback-menu-show-studies");
-      studiesMenuItem.setAttribute("disabled",
-                                   !this._prefs.getBoolPref(RUN_AT_ALL_PREF));
     },
 
     onMenuButtonMouseDown: function(attachPointId) {
