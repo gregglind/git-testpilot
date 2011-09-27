@@ -39,17 +39,17 @@ const PAGE_TYPE_STATUS = 0;
 const PAGE_TYPE_QUIT = 1;
 var stringBundle;
 
-  function getUrlParam(name) {
-    // from http://www.netlobo.com/url_query_string_javascript.html
-    name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
-    var regexS = "[\\?&]"+name+"=([^&#]*)";
-    var regex = new RegExp(regexS);
-    var results = regex.exec(window.location.href);
-    if( results == null )
-      return "";
-    else
-      return results[1];
-  }
+function getUrlParam(name) {
+  // from http://www.netlobo.com/url_query_string_javascript.html
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  var regex = new RegExp(regexS);
+  var results = regex.exec(window.location.href);
+  if( results == null )
+    return "";
+  else
+    return results[1];
+}
 
   function uploadData() {
     Components.utils.import("resource://testpilot/modules/setup.js");

@@ -1,3 +1,14 @@
+function getUrlParam(name) {
+  // from http://www.netlobo.com/url_query_string_javascript.html
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  var regex = new RegExp(regexS);
+  var results = regex.exec(window.location.href);
+  if( results == null )
+    return "";
+  else
+    return results[1];
+}
 
 function showDbContentsHtml() {
   Components.utils.import("resource://testpilot/modules/setup.js");
@@ -15,7 +26,7 @@ function showDbContentsHtml() {
 	  createBundle("chrome://testpilot/locale/main.properties");
 
   var title = stringBundle.formatStringFromName(
-	"testpilot.statusPage.rawDataTitle", [experiment.title], 1);
+                "testpilot.statusPage.mobile.rawDataTitle", [experiment.title], 1);
 
   $("title").html(title);
 
