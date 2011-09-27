@@ -369,7 +369,6 @@ TestPilotExperiment.prototype = {
   },
 
   get currentStatusUrl() {
-    // TODO chose status.html or status_mobile.html depending on platform...
     let param = "?eid=" + this._id;
     return "chrome://testpilot/content/status_mobile.html" + param;
   },

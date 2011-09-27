@@ -38,9 +38,6 @@
 var TestPilotWindowUtils;
 
 (function() {
-  const ALL_STUDIES_WINDOW_NAME = "TestPilotAllStudiesWindow";
-  const ALL_STUDIES_WINDOW_TYPE = "extensions:testpilot:all_studies_window";
-
   TestPilotWindowUtils = {
     openAllStudies: function() {
       // fennec only

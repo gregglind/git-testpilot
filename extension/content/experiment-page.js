@@ -39,13 +39,6 @@ const PAGE_TYPE_STATUS = 0;
 const PAGE_TYPE_QUIT = 1;
 var stringBundle;
 
-  function showRawData(experimentId) {
-    window.openDialog(
-      "chrome://testpilot/content/raw-data-dialog.xul",
-      "TestPilotRawDataDialog", "chrome,centerscreen,resizable,scrollbars",
-      experimentId);
-  }
-
   function getUrlParam(name) {
     // from http://www.netlobo.com/url_query_string_javascript.html
     name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
@@ -91,16 +84,6 @@ var stringBundle;
         uploadStatus.appendChild(willRetryParagraph);
       }
     });
-  }
-
-  function deleteData() {
-    Components.utils.import("resource://testpilot/modules/setup.js");
-    Components.utils.import("resource://testpilot/modules/tasks.js");
-    let eid = getUrlParam("eid");
-    let task = TestPilotSetup.getTaskById(eid);
-    task.dataStore.wipeAllData();
-    // reload the URL after wiping all data.
-    window.location = "chrome://testpilot/content/status.html?eid=" + eid;
   }
 
   function saveCanvas(canvas) {
@@ -202,7 +185,7 @@ var stringBundle;
   }
 
   function openLink(url) {
-    // open the link in the chromeless window
+    // open the link in a tab
     let wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
                        .getService(Components.interfaces.nsIWindowMediator);
     let recentWindow = wm.getMostRecentWindow("navigator:browser");
