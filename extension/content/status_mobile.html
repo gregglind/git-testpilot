@@ -31,37 +31,37 @@
         <span id="recur-controls"></span>
 
         <p><button id="data-graph-display-button"
-                    onclick="toggleSection('data-graph-display');">Hide</button>
-           <span class="section-title">Your Usage Data</span></p> <!-- TODO l10n -->
+                    onclick="toggleSection('data-graph-display');"></button>
+           <span class="section-title" id="usage-title"></span></p>
         <div id="data-graph-display-text">
           <div id="data-plot-div" style="width:480px;height:400px"></div>
-          <p><a id="raw-data-link" href="raw-data.html">Raw Data</a></p> <!-- TODO l10n -->
+          <p><a id="raw-data-link" href="raw-data.html"></a></p>
         </div>
         <hr/></p>
 
         <p><button id="data-privacy-button"
-                    onclick="toggleSection('data-privacy');">Show</button>
-          <span class="section-title">Privacy Info</a> <!-- TODO l10n -->
+                    onclick="toggleSection('data-privacy');"></button>
+          <span class="section-title" id="privacy-title"></a>
         <div id="data-privacy-text" class="initially-hidden">
         </div>
         <hr/></p>
 
         <p><button id="contact-links-button"
-                    onclick="toggleSection('contact-links');">Show</button>
-          <span class="section-title">Contact Us</a> <!-- TODO l10n -->
+                    onclick="toggleSection('contact-links');"></button>
+          <span class="section-title" id="contact-title"></a>
         <div id="contact-links-text" class="initially-hidden">
            <ul>
            <li><a id="propose-test-link" href="https://wiki.mozilla.org/Labs/Test_Pilot"></a></li>
-           <li><a href="http://groups.google.com/group/mozilla-labs-testpilot">Report a Bug</a></li>
+           <li><a id="report-bug-link"
+                  href="http://groups.google.com/group/mozilla-labs-testpilot"></a></li>
            <li><a id="testpilot-twitter-link" href="http://www.twitter.com/MozTestPilot"></a></li>
-           <li><a id="comments-and-discussions-link" href="http://groups.google.com/group/mozilla-labs-testpilot"></a></li>
-
+           <li><a id="comments-and-discussions-link"
+                  href="http://groups.google.com/group/mozilla-labs-testpilot"></a></li>
             </ul>
         </div>
         <hr/></p>
 
-        <p><a id="opt-out-link" onclick="showQuitUi();">
-            Quit This Study</a></p> <!-- TODO l10n -->
+        <p><a id="opt-out-link" onclick="showQuitUi();"></a></p>
         </div>
         <div id="quit-ui" class="initially-hidden">
           <h2 id="about-quit-title"></h2>

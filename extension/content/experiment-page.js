@@ -404,13 +404,15 @@ var stringBundle;
   }
 
   function toggleSection(id) {
+    let hide = stringBundle.GetStringFromName("testpilot.statusPage.mobile.hide");
+    let show = stringBundle.GetStringFromName("testpilot.statusPage.mobile.show");
     let div = $("#" + id + "-text");
     div.slideToggle();
     let button = $("#" + id + "-button");
-    if (button.html() == "Hide") {
-      button.html("Show");
+    if (button.html() == hide) {
+      button.html(show);
     } else {
-      button.html("Hide");
+      button.html(hide);
     }
   }
 
@@ -432,8 +434,26 @@ var stringBundle;
 	{ id: "propose-test-link",
 	  stringKey: "testpilot.page.proposeATest" },
 	{ id: "testpilot-twitter-link",
-	  stringKey: "testpilot.page.testpilotOnTwitter" }
-      ];
+	  stringKey: "testpilot.page.testpilotOnTwitter" },
+        { id: "data-graph-display-button",
+          stringKey: "testpilot.statusPage.mobile.hide" }, // = Hide
+        { id: "data-privacy-button",
+          stringKey: "testpilot.statusPage.mobile.show" }, // Show
+        { id: "contact-links-button",
+          stringKey: "testpilot.statusPage.mobile.show" }, // Show
+        { id: "usage-title",
+          stringKey: "testpilot.statusPage.mobile.usage" }, // Your Usage Data
+        { id: "privacy-title",
+          stringKey: "testpilot.statusPage.mobile.privacy" }, // Privacy Info
+        { id: "contact-title",
+          stringKey: "testpilot.statusPage.mobile.contact" }, // Contact Us
+        { id: "report-bug-link",
+          stringKey: "testpilot.statusPage.mobile.bug" }, // Report a Bug
+        { id: "opt-out-link",
+          stringKey: "testpilot.statusPage.mobile.quit" }, // Quit This Study
+        { id: "raw-data-link",
+          stringKey: "testpilot.statusPage.mobile.rawData" } // Raw Data
+        ];
     } else if (pageType == PAGE_TYPE_QUIT) {
       map = [
 	{ id: "page-title", stringKey: "testpilot.fullBrandName" },
@@ -466,37 +486,6 @@ var stringBundle;
       elem.innerHTML = stringBundle.GetStringFromName(entry.stringKey);
     }
   }
-
-function showDbContentsHtml() {
-  Components.utils.import("resource://testpilot/modules/setup.js");
-  var experimentId = getUrlParam("eid");
-  var experiment = TestPilotSetup.getTaskById(experimentId);
-  var dataStore = experiment.dataStore;
-  var table = document.getElementById("raw-data-table");
-  var columnNames = dataStore.getHumanReadableColumnNames();
-  var propertyNames = dataStore.getPropertyNames();
-
-  $("title").html("Raw Data For " + experiment.title + " Study");
-
-  var headerRow = $("#raw-data-header-row");
-
-  var i, j;
-  for (j = 0; j < columnNames.length; j++) {
-    headerRow.append($("<th></th>").html(columnNames[j]));
-  }
-
-  dataStore.getAllDataAsJSON(true, function(rawData) {
-    // Convert each object in the JSON into a row of the table.
-    for (i = 0; i < rawData.length; i++) {
-      var row = $("<tr></tr>");
-      for (j = 0; j < columnNames.length; j++) {
-        row.append($("<td></td>").html(rawData[i][propertyNames[j]]));
-      }
-      $("#raw-data-table").append(row);
-    }
-  });
-
-}
 
 function showQuitUi() {
   $('#quit-ui').slideDown();
