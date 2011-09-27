@@ -282,11 +282,6 @@ let TestPilotSetup = {
     this.taskList.push(testPilotTask);
   },
 
-  _openChromeless: function TPS__openChromeless(url) {
-    let window = this._getFrontBrowserWindow();
-    window.TestPilotWindowUtils.openChromeless(url);
-  },
-
   _openInTab: function TPS__openInTab(url) {
     let window = this._getFrontBrowserWindow();
     window.TestPilotWindowUtils.openInTab(url);
@@ -327,7 +322,7 @@ let TestPilotSetup = {
       },
       seeAllStudiesLabel: self._stringBundle.GetStringFromName("testpilot.notification.seeAllStudiesLabel"),
       seeAllStudiesCallback: function() {
-        self._getFrontBrowserWindow().TestPilotWindowUtils.openAllStudiesWindow();
+        self._getFrontBrowserWindow().TestPilotWindowUtils.openAllStudies();
       },
       alwaysSubmitLabel: self._stringBundle.GetStringFromName("testpilot.notification.alwaysSubmitLabel"),
       alwaysSubmitCallback: function() {
@@ -380,7 +375,7 @@ let TestPilotSetup = {
               },
               seeAllStudiesLabel: self._stringBundle.GetStringFromName("testpilot.notification.seeAllStudiesLabel"),
               seeAllStudiesCallback: function() {
-                win.TestPilotWindowUtils.openAllStudiesWindow();
+                win.TestPilotWindowUtils.openAllStudies();
               },
               alwaysSubmitLabel: self._stringBundle.GetStringFromName("testpilot.notification.dontShowNewLabel"),
               alwaysSubmitCallback: function() {

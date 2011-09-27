@@ -60,7 +60,7 @@ var TestPilotWelcomePage = {
   openPilotSurvey: function() {
     let url =
       "chrome://testpilot/content/take-survey.html?eid=" + this.surveyId;
-    TestPilotWindowUtils.openChromeless(url);
+    TestPilotWindowUtils.openInTab(url);
   },
 
   _setStrings: function() {
