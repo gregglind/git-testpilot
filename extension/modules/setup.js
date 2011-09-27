@@ -57,8 +57,6 @@ const ALWAYS_SUBMIT_DATA = "extensions.testpilot.alwaysSubmitData";
 const UPDATE_CHANNEL_PREF = "app.update.channel";
 const RANDOM_DEPLOY_PREFIX = "extensions.testpilot.deploymentRandomizer";
 
-Cu.import("resource://testpilot/modules/interface.js");
-
 let TestPilotSetup = {
   didReminderAfterStartup: false,
   startupComplete: false,
@@ -143,7 +141,9 @@ let TestPilotSetup = {
   __notifier: null,
   get _notifier() {
     if (this.__notifier == null) {
-      this.__notifier = TestPilotUIBuilder.getNotificationManager();
+      let ntfnModule = {};
+      Cu.import("resource://testpilot/modules/notifications.js", ntfnModule);
+      this.__notifier = new ntfnModule.AndroidNotificationManager();
     }
     return this.__notifier;
   },

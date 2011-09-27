@@ -123,10 +123,6 @@ var TestPilotMenuUtils;
     initialized: false,
     onWindowLoad: function() {
       try {
-      // Customize the interface of the newly opened window.
-      Cu.import("resource://testpilot/modules/interface.js");
-      Services.console.logStringMessage("Interface module loaded.\n");
-      TestPilotUIBuilder.buildCorrectInterface(window);
 
       /* "Hold" window load events for TestPilotSetup, passing them along only
        * after startup is complete.  It's hacky, but the benefit is that

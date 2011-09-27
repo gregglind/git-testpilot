@@ -107,8 +107,10 @@
 
   function makeThereBeAPopup() {
     document.getElementById("debug").innerHTML = "Making popup...";
-    Components.utils.import("resource://testpilot/modules/interface.js");
-    var notifier = TestPilotUIBuilder.getNotificationManager();
+
+    var ntfnModule = {};
+    Components.utils.import("resource://testpilot/modules/notifications.js", ntfnModule);
+    var notifier = new ntfnModule.AndroidNotificationManager();
     document.getElementById("debug").innerHTML = "Got Notfn Manager";
     var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].
                getService(Components.interfaces.nsIWindowMediator);
