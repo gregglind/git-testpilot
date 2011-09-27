@@ -56,7 +56,6 @@ const POPUP_CHECK_INTERVAL = "extensions.testpilot.popup.delayAfterStartup";
 const POPUP_REMINDER_INTERVAL = "extensions.testpilot.popup.timeBetweenChecks";
 const ALWAYS_SUBMIT_DATA = "extensions.testpilot.alwaysSubmitData";
 const UPDATE_CHANNEL_PREF = "app.update.channel";
-const LOG_FILE_NAME = "TestPilotErrorLog.log";
 const RANDOM_DEPLOY_PREFIX = "extensions.testpilot.deploymentRandomizer";
 
 Cu.import("resource://testpilot/modules/interface.js");
@@ -86,11 +85,9 @@ let TestPilotSetup = {
       let Cuddlefish = {};
       Components.utils.import("resource://testpilot/modules/lib/cuddlefish.js",
                         Cuddlefish);
-      let repo = this._logRepo;
       this.__loader = new Cuddlefish.Loader(
           {rootPaths: ["resource://testpilot/modules/",
-                     "resource://testpilot/modules/lib/"],
-           console: repo.getLogger("TestPilot.Loader")
+                       "resource://testpilot/modules/lib/"]
       });
     }
     return this.__loader;
@@ -114,35 +111,6 @@ let TestPilotSetup = {
                   this._dataStoreModule);
     }
     return this.__dataStoreModule;
-  },
-
-  __logRepo: null,
-  get _logRepo() {
-    // Note: This hits the disk so it's an expensive operation; don't call it
-    // on startup.
-    if (this.__logRepo == null) {
-      let Log4MozModule = {};
-      Cu.import("resource://testpilot/modules/log4moz.js", Log4MozModule);
-      let props = Cc["@mozilla.org/file/directory_service;1"].
-                    getService(Ci.nsIProperties);
-      let logFile = props.get("ProfD", Components.interfaces.nsIFile);
-      logFile.append(LOG_FILE_NAME);
-      let formatter = new Log4MozModule.Log4Moz.BasicFormatter;
-      let root = Log4MozModule.Log4Moz.repository.rootLogger;
-      root.level = Log4MozModule.Log4Moz.Level["All"];
-      let appender = new Log4MozModule.Log4Moz.RotatingFileAppender(logFile, formatter);
-      root.addAppender(appender);
-      this.__logRepo = Log4MozModule.Log4Moz.repository;
-    }
-    return this.__logRepo;
-  },
-
-  __logger: null,
-  get _logger() {
-    if (this.__logger == null) {
-      this.__logger = this._logRepo.getLogger("TestPilot.Setup");
-    }
-    return this.__logger;
   },
 
   __taskModule: null,
@@ -184,12 +152,8 @@ let TestPilotSetup = {
   globalStartup: function TPS__doGlobalSetup() {
     // Only ever run this stuff ONCE, on the first window restore.
     // Should get called by the Test Pilot component.
-    let logger = this._logger;
-    logger.trace("TestPilotSetup.globalStartup was called.");
-
     try {
     if (!this._prefs.getBoolPref(RUN_AT_ALL_PREF)) {
-      logger.trace("Test Pilot globally disabled: Not starting up.");
       return;
     }
 
@@ -206,7 +170,6 @@ let TestPilotSetup = {
     // Set up timers to remind user x minutes after startup
     // and once per day thereafter.  Use nsITimer so it doesn't belong to
     // any one window.
-    logger.trace("Setting interval for showing reminders...");
 
     this._shortTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
     this._shortTimer.initWithCallback(
@@ -239,7 +202,6 @@ let TestPilotSetup = {
           /* Callback to complete startup after we finish
            * checking for tasks. */
          self.startupComplete = true;
-         logger.trace("I'm in the callback from checkForTasks.");
          // Send startup message to each task:
          for (let i = 0; i < self.taskList.length; i++) {
            self.taskList[i].onAppStartup();
@@ -247,17 +209,14 @@ let TestPilotSetup = {
          self._obs.notify("testpilot:startup:complete", "", null);
          /* onWindowLoad gets called once for each window,
           * but only after we fire this notification. */
-         logger.trace("Testpilot startup complete.");
       });
     });
     } catch(e) {
-      logger.error("Error in testPilot startup: " + e);
+      // TODO log to console here instead
     }
   },
 
   globalShutdown: function TPS_globalShutdown() {
-    let logger = this._logger;
-    logger.trace("Global shutdown.  Unregistering everything.");
     let self = this;
     for (let i = 0; i < self.taskList.length; i++) {
       self.taskList[i].onAppShutdown();
@@ -273,7 +232,6 @@ let TestPilotSetup = {
     this._loader.unload();
     this._shortTimer.cancel();
     this._longTimer.cancel();
-    logger.trace("Done unregistering everything.");
   },
 
   _getFrontBrowserWindow: function TPS__getFrontWindow() {
@@ -294,14 +252,12 @@ let TestPilotSetup = {
   },
 
   onWindowUnload: function TPS__onWindowRegistered(window) {
-    this._logger.trace("Called TestPilotSetup.onWindow unload!");
     for (let i = 0; i < this.taskList.length; i++) {
       this.taskList[i].onWindowClosed(window);
     }
   },
 
   onWindowLoad: function TPS_onWindowLoad(window) {
-    this._logger.trace("Called TestPilotSetup.onWindowLoad!");
     // Run this stuff once per window...
     let self = this;
 
@@ -497,7 +453,6 @@ let TestPilotSetup = {
     }
     // Do a full reminder -- but at most once per browser session
     if (!this.didReminderAfterStartup) {
-      this._logger.trace("Doing reminder after startup...");
       this.didReminderAfterStartup = true;
       this._notifyUserOfTasks();
     }
@@ -571,7 +526,6 @@ let TestPilotSetup = {
      * false if not.
      * Default is always to run the study - return true UNLESS the study
      * specifies a requirement that we don't meet. */
-    let logger = this._logger;
     try {
       let minTpVer, minFxVer, expName, runOrNotFunc, randomDeployment;
       /* Could be an experiment, which specifies experimentInfo, or survey,
@@ -581,7 +535,6 @@ let TestPilotSetup = {
                    experiment.surveyInfo;
       if (!info) {
         // If neither one is supplied, study lacks metadata required to run
-        logger.warn("Study lacks minimum metadata to run.");
         return false;
       }
       minTpVer = info.minTPVersion;
@@ -592,15 +545,11 @@ let TestPilotSetup = {
 
       // Minimum test pilot version:
       if (minTpVer && this._isNewerThanMe(minTpVer)) {
-        logger.warn("Not loading " + expName);
-        logger.warn("Because it requires Test Pilot version " + minTpVer);
         return false;
       }
 
       // Minimum firefox version:
       if (minFxVer && this._isNewerThanFirefox(minFxVer)) {
-        logger.warn("Not loading " + expName);
-        logger.warn("Because it requires Firefox version " + minFxVer);
         return false;
       }
 
@@ -630,25 +579,21 @@ let TestPilotSetup = {
         return runOrNotFunc();
       }
     } catch (e) {
-      logger.warn("Error in requirements check " +  e);
+      // TODO log to console here
     }
     return true;
   },
 
   checkForTasks: function TPS_checkForTasks(callback) {
-    let logger = this._logger;
     if (! this._remoteExperimentLoader ) {
-      logger.trace("Now requiring remote experiment loader:");
       let remoteLoaderModule = this._loader.require("remote-experiment-loader");
-      logger.trace("Now instantiating remoteExperimentLoader:");
-      let rel = new remoteLoaderModule.RemoteExperimentLoader(this._logRepo);
+      let rel = new remoteLoaderModule.RemoteExperimentLoader();
       this._remoteExperimentLoader = rel;
     }
 
     let self = this;
     this._remoteExperimentLoader.checkForUpdates(
       function(success) {
-        logger.info("Getting updated experiments... Success? " + success);
         // Actually, we do exactly the same thing whether we succeeded in
         // downloading new contents or not...
         let experiments = self._remoteExperimentLoader.getExperiments();
@@ -660,7 +605,6 @@ let TestPilotSetup = {
           try {
             // The try-catch ensures that if something goes wrong in loading one
             // experiment, the other experiments after that one still get loaded.
-            logger.trace("Attempting to load experiment " + filename);
 
             let task;
             // Could be a survey: check if surveyInfo is exported:
@@ -686,9 +630,8 @@ let TestPilotSetup = {
                                                               webContent);
             }
             self.addTask(task);
-            logger.info("Loaded task " + filename);
           } catch (e) {
-            logger.warn("Failed to load task " + filename + ": " + e);
+            // TODO log e, filename to console
           }
         } // end for filename in experiments
 

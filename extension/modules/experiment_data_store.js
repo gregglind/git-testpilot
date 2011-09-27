@@ -43,7 +43,6 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 
 Cu.import("resource://testpilot/modules/dbutils.js");
-Cu.import("resource://testpilot/modules/log4moz.js");
 Cu.import("resource://testpilot/modules/string_sanitizer.js");
 var _dirSvc = Cc["@mozilla.org/file/directory_service;1"]
                 .getService(Ci.nsIProperties);
@@ -64,7 +63,6 @@ ExperimentDataStore.prototype = {
     this._fileName = fileName;
     this._tableName = tableName;
     this._columns = columns;
-    let logger = Log4Moz.repository.getLogger("TestPilot.Database");
     let file = _dirSvc.get("ProfD", Ci.nsIFile);
     file.append(this._fileName);
     // openDatabase creates the file if it's not there yet:
@@ -91,7 +89,7 @@ ExperimentDataStore.prototype = {
     try {
       DbUtils.createTable(this._connection, this._tableName, schema);
     } catch(e) {
-      logger.warn("Error in createTable: " + e + "\n");
+       // TODO log error to console
     }
 
     // Create a second table for storing exceptions for this study.  It has a fixed
@@ -101,7 +99,7 @@ ExperimentDataStore.prototype = {
     try {
       DbUtils.createTable(this._connection, "exceptions", exceptionTableSchema);
     } catch(e) {
-      logger.warn("Error in createTable: " + e + "\n");
+      // TODO log error to console
     }
   },
 
@@ -304,8 +302,6 @@ ExperimentDataStore.prototype = {
   wipeAllData: function EDS_wipeAllData(callback) {
     // Wipe both the data table and the exception table; call callback when both
     // are wiped.
-    let logger = Log4Moz.repository.getLogger("TestPilot.Database");
-    logger.trace("ExperimentDataStore.wipeAllData called.\n");
     let wipeDataStmt = this._createStatement("DELETE FROM " + this._tableName);
     let wipeExcpStmt = this._createStatement("DELETE FROM " + EXCEPTION_TABLE_NAME);
 
@@ -319,12 +315,7 @@ ExperimentDataStore.prototype = {
     wipeDataStmt.executeAsync({
       handleResult: function(aResultSet) {},
       handleError: function(aError) { onComplete(); },
-      handleCompletion: function(aReason) {
-        if (aReason == Ci.mozIStorageStatementCallback.REASON_FINISHED) {
-          logger.trace("ExperimentDataStore.wipeAllData complete.\n");
-        }
-        onComplete();
-      }
+      handleCompletion: function(aReason) { onComplete(); }
     });
     wipeExcpStmt.executeAsync({
       handleResult: function(aResultSet) {},

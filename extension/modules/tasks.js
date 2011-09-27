@@ -44,7 +44,6 @@ const Ci = Components.interfaces;
 
 Components.utils.import("resource://testpilot/modules/Observers.js");
 Components.utils.import("resource://testpilot/modules/metadata.js");
-Components.utils.import("resource://testpilot/modules/log4moz.js");
 Components.utils.import("resource://testpilot/modules/string_sanitizer.js");
 
 const STATUS_PREF_PREFIX = "extensions.testpilot.taskstatus.";
@@ -117,7 +116,6 @@ var TestPilotTask = {
     this._url = url;
     this._summary = summary;
     this._thumbnail = thumb;
-    this._logger = Log4Moz.repository.getLogger("TestPilot.Task_"+this._id);
   },
 
   get title() {
@@ -229,8 +227,7 @@ var TestPilotTask = {
     // TODO we always suppress notifications except when new status is
     // "finished"; maybe remove that argument and only fire notification
     // when status is "finished".
-    let logger = Log4Moz.repository.getLogger("TestPilot.Task");
-    logger.info("Changing task " + this._id + " status to " + newStatus);
+    // TODO log status change to console?
     this._status = newStatus;
     // Set the pref:
     this._prefs.setIntPref(STATUS_PREF_PREFIX + this._id, newStatus);
@@ -341,8 +338,6 @@ TestPilotExperiment.prototype = {
     // Duration is specified in days:
     let duration = expInfo.duration || 7; // default 1 week
     this._endDate = this._startDate + duration * (24 * 60 * 60 * 1000);
-    this._logger.info("Start date is " + this._startDate.toString());
-    this._logger.info("End date is " + this._endDate.toString());
 
     this._handlers = handlers;
     this._uploadRetryTimer = null;
@@ -500,70 +495,63 @@ TestPilotExperiment.prototype = {
 
   // Pass events along to handlers:
   onNewWindow: function TestPilotExperiment_onNewWindow(window) {
-    this._logger.trace("Experiment.onNewWindow called.");
     if (this.experimentIsRunning()) {
       try {
         this._handlers.onNewWindow(window);
       } catch(e) {
-        this._dataStore.logException("onNewWindow: " + e);
+        // TODO log exception to console
       }
     }
   },
 
   onWindowClosed: function TestPilotExperiment_onWindowClosed(window) {
-    this._logger.trace("Experiment.onWindowClosed called.");
     if (this.experimentIsRunning()) {
       try {
         this._handlers.onWindowClosed(window);
       } catch(e) {
-        this._dataStore.logException("onWindowClosed: " + e);
+        // TODO log exception to console
       }
     }
   },
 
   onAppStartup: function TestPilotExperiment_onAppStartup() {
-    this._logger.trace("Experiment.onAppStartup called.");
     if (this.experimentIsRunning()) {
       try {
         this._handlers.onAppStartup();
       } catch(e) {
-        this._dataStore.logException("onAppStartup: " + e);
+        // TODO log exception to console
       }
     }
   },
 
   onAppShutdown: function TestPilotExperiment_onAppShutdown() {
-    this._logger.trace("Experiment.onAppShutdown called.");
     if (this.experimentIsRunning()) {
       try {
         this._handlers.onAppShutdown();
       } catch(e) {
-        this._dataStore.logException("onAppShutdown: " + e);
+        // TODO log exception to console
       }
     }
   },
 
   onExperimentStartup: function TestPilotExperiment_onStartup() {
-    this._logger.trace("Experiment.onExperimentStartup called.");
     // Make sure not to call this if it's already been called:
     if (this.experimentIsRunning() && !this._startedUpHandlers) {
-      this._logger.trace("  ... starting up handlers!");
       try {
         this._handlers.onExperimentStartup(this._dataStore);
       } catch(e) {
-        this._dataStore.logException("onExperimentStartup: " + e);
+        // TODO log exception to console
       }
       this._startedUpHandlers = true;
     }
   },
 
   onExperimentShutdown: function TestPilotExperiment_onShutdown() {
-    this._logger.trace("Experiment.onExperimentShutdown called.");
     if (this.experimentIsRunning() && this._startedUpHandlers) {
       try {
         this._handlers.onExperimentShutdown();
       } catch(e) {
-        this._dataStore.logException("onExperimentShutdown: " + e);
+        // TODO console
       }
       this._startedUpHandlers = false;
     }
@@ -571,33 +559,30 @@ TestPilotExperiment.prototype = {
 
   doExperimentCleanup: function TestPilotExperiment_doExperimentCleanup() {
     if (this._handlers.doExperimentCleanup) {
-      this._logger.trace("Doing experiment cleanup.");
       try {
         this._handlers.doExperimentCleanup();
       } catch(e) {
-        this._dataStore.logException("doExperimentCleanup: " + e);
+        // TODO console
       }
     }
   },
 
   onEnterPrivateBrowsing: function TestPilotExperiment_onEnterPrivate() {
-    this._logger.trace("Task is entering private browsing.");
     if (this.experimentIsRunning()) {
       try {
         this._handlers.onEnterPrivateBrowsing();
       } catch(e) {
-        this._dataStore.logException("onEnterPrivateBrowsing: " + e);
+        // TODO console
       }
     }
   },
 
   onExitPrivateBrowsing: function TestPilotExperiment_onExitPrivate() {
-    this._logger.trace("Task is exiting private browsing.");
     if (this.experimentIsRunning()) {
       try {
         this._handlers.onExitPrivateBrowsing();
       } catch(e) {
-        this._dataStore.logException("onExitPrivateBrowsing: " + e);
+        // TODO console
       }
     }
   },
@@ -612,7 +597,7 @@ TestPilotExperiment.prototype = {
         }
       }
     } catch(e) {
-      this._dataStore.logException("getStudyMetadata: " + e);
+      // TODO console
     }
     return null;
   },
@@ -697,7 +682,6 @@ TestPilotExperiment.prototype = {
       // if we've done a permanent opt-out, then don't start over-
       // just keep rescheduling.
       if (this.recurPref == TaskConstants.NEVER_SUBMIT) {
-        this._logger.info("recurPref is never submit, so I'm rescheduling.");
         this._reschedule();
       } else {
         // Normal case is reset to new.
@@ -706,10 +690,8 @@ TestPilotExperiment.prototype = {
         // increment count of how many times this recurring test has run
         let numTimesRun = this._numTimesRun;
         numTimesRun++;
-        this._logger.trace("Test recurring... incrementing " + RECUR_TIMES_PREF_PREFIX + this._id + " to " + numTimesRun);
         this._prefs.setIntPref(RECUR_TIMES_PREF_PREFIX + this._id,
                                numTimesRun );
-        this._logger.trace("Incremented it.");
       }
     }
 
@@ -719,7 +701,6 @@ TestPilotExperiment.prototype = {
         !this._prefs.getBoolPref("extensions.testpilot.popup.showOnNewStudy") &&
         (this._status == TaskConstants.STATUS_NEW ||
          this._status == TaskConstants.STATUS_PENDING)) {
-      this._logger.info("Skipping pending and going straight to starting.");
       this.changeStatus(TaskConstants.STATUS_STARTING, true);
     }
 
@@ -728,7 +709,6 @@ TestPilotExperiment.prototype = {
     if ( this._status == TaskConstants.STATUS_STARTING &&
         currentDate >= this._startDate &&
         currentDate <= this._endDate) {
-      this._logger.info("Study now starting.");
       // clear the data before starting.
       this._dataStore.wipeAllData(function() {
         // Experiment is now in progress.
@@ -741,7 +721,6 @@ TestPilotExperiment.prototype = {
     if (this._status < TaskConstants.STATUS_FINISHED &&
 	currentDate > this._endDate) {
       let setDataDeletionDate = true;
-      this._logger.info("Passed End Date - Switched Task Status to Finished");
       this.changeStatus(TaskConstants.STATUS_FINISHED);
       this.onExperimentShutdown();
       this.doExperimentCleanup();
@@ -751,12 +730,10 @@ TestPilotExperiment.prototype = {
         // A recurring experiment may have been set to automatically submit. If
         // so, submit now!
         if (this.recurPref == TaskConstants.ALWAYS_SUBMIT) {
-          this._logger.info("Automatically Uploading Data");
           this.upload(function(success) {
             Observers.notify("testpilot:task:dataAutoSubmitted", self, null);
 	  });
         } else if (this.recurPref == TaskConstants.NEVER_SUBMIT) {
-          this._logger.info("Automatically opting out of uploading data");
           this.changeStatus(TaskConstants.STATUS_CANCELLED, true);
           this._dataStore.wipeAllData();
 	  setDataDeletionDate = false;
@@ -861,7 +838,6 @@ TestPilotExperiment.prototype = {
     // note the server will reject any upload over 5MB - shouldn't be a problem
     let self = this;
     let url = self.uploadUrl;
-    self._logger.info("Posting data to url " + url + "\n");
     self._prependMetadataToJSON( function(dataString) {
       let req = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
                   .createInstance( Ci.nsIXMLHttpRequest );
@@ -873,7 +849,7 @@ TestPilotExperiment.prototype = {
         if (req.readyState == 4) {
           if (req.status == 200 || req.status == 201 || req.status == 202) {
             let location = req.getResponseHeader("Location");
-  	    self._logger.info("DATA WAS POSTED SUCCESSFULLY " + location);
+            // TODO log to console
             if (self._uploadRetryTimer) {
               self._uploadRetryTimer.cancel(); // Stop retrying - it worked!
             }
@@ -892,7 +868,7 @@ TestPilotExperiment.prototype = {
 
             // TODO don't retry if status code is 401, 404, or...
             // any others?
-            self._logger.warn("ERROR POSTING DATA: " + req.responseText);
+            // TODO log req.response text to console
             self._uploadRetryTimer = Cc["@mozilla.org/timer;1"]
               .createInstance(Ci.nsITimer);
 
@@ -916,7 +892,6 @@ TestPilotExperiment.prototype = {
   optOut: function TestPilotExperiment_optOut(reason, callback) {
     // Regardless of study ID, post the opt-out message to a special
     // database table of just opt-out messages; include study ID in metadata.
-    let logger = this._logger;
 
     this.onExperimentShutdown();
     this.changeStatus(TaskConstants.STATUS_CANCELLED);
@@ -924,7 +899,6 @@ TestPilotExperiment.prototype = {
     this.doExperimentCleanup();
     this._dateForDataDeletion = null;
     this._expirationDateForDataSubmission = null;
-    logger.info("Opting out of test with reason " + reason);
     if (reason) {
       // Send us the reason...
       // (TODO: include metadata?)
@@ -935,7 +909,6 @@ TestPilotExperiment.prototype = {
       var req =
         Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].
 	  createInstance(Ci.nsIXMLHttpRequest);
-      logger.trace("Posting " + dataString + " to " + url);
       req.open('POST', url, true);
       req.setRequestHeader("Content-type", "application/json");
       req.setRequestHeader("Content-length", dataString.length);
@@ -943,19 +916,16 @@ TestPilotExperiment.prototype = {
       req.onreadystatechange = function(aEvt) {
         if (req.readyState == 4) {
           if (req.status == 200 || req.status == 201 || req.status == 202) {
-	    logger.info("Quit reason posted successfully " + req.responseText);
             if (callback) {
               callback(true);
             }
 	  } else {
-	    logger.warn(req.status + " posting error " + req.responseText);
             if (callback) {
               callback(false);
             }
 	  }
 	}
       };
-      logger.trace("Sending quit reason.");
       req.send(dataString);
     } else {
       if (callback) {
@@ -967,7 +937,6 @@ TestPilotExperiment.prototype = {
   setRecurPref: function TPE_setRecurPrefs(value) {
     // value is NEVER_SUBMIT, ALWAYS_SUBMIT, or ASK_EACH_TIME
     let prefName = RECUR_PREF_PREFIX + this._id;
-    this._logger.info("Setting recur pref to " + value);
     this._prefs.setIntPref(prefName, value);
   }
 };
@@ -1033,7 +1002,6 @@ TestPilotBuiltinSurvey.prototype = {
       return null;
     } else {
       let surveyResults = this._prefs.getCharPref(prefName);
-      this._logger.info("Trying to json.parse this: " + surveyResults);
       return sanitizeJSONStrings( JSON.parse(surveyResults) );
     }
   },
@@ -1099,15 +1067,12 @@ TestPilotBuiltinSurvey.prototype = {
         if (req.readyState == 4) {
           if (req.status == 200 || req.status == 201 ||
              req.status == 202) {
-            self._logger.info(
-	    "DATA WAS POSTED SUCCESSFULLY " + req.responseText);
             if (self._uploadRetryTimer) {
               self._uploadRetryTimer.cancel(); // Stop retrying - it worked!
 	    }
             self.changeStatus(TaskConstants.STATUS_SUBMITTED);
 	    callback(true);
 	  } else {
-	    self._logger.warn(req.status + " ERROR POSTING DATA: " + req.responseText);
 	    self._uploadRetryTimer =
 	      Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 
@@ -1140,7 +1105,6 @@ TestPilotWebSurvey.prototype = {
                    surveyInfo.surveyUrl,
                    surveyInfo.summary,
                    surveyInfo.thumbnail);
-    this._logger.info("Initing survey.  This._status is " + this._status);
   },
 
   get taskType() {

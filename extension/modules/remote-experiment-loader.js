@@ -165,17 +165,15 @@ function downloadFile(url, cb, lastModified) {
     // {'experiments': [{'name': 'Bookmark Experiment',
     //                           'filename': 'bookmarks.js'}]}
 
-exports.RemoteExperimentLoader = function(logRepo, fileGetterFunction ) {
+exports.RemoteExperimentLoader = function(fileGetterFunction ) {
   /* fileGetterFunction is an optional stub function for unit testing.  Pass in
    * nothing to have it use the default behavior of downloading the files from the
    * Test Pilot server.  FileGetterFunction must take (url, callback).*/
-  this._init(logRepo, fileGetterFunction);
+  this._init(fileGetterFunction);
 };
 
 exports.RemoteExperimentLoader.prototype = {
-  _init: function(logRepo, fileGetterFunction) {
-    this._logger = logRepo.getLogger("TestPilot.Loader");
-    this._expLogger = logRepo.getLogger("TestPilot.RemoteCode");
+  _init: function(fileGetterFunction) {
     let prefs = require("preferences-service");
     this._baseUrl = prefs.get(BASE_URL_PREF, "");
     if (fileGetterFunction != undefined) {
@@ -183,27 +181,20 @@ exports.RemoteExperimentLoader.prototype = {
     } else {
       this._fileGetter = downloadFile;
     }
-    this._logger.trace("About to instantiate jar store.");
     this._jarStore = new JarStore();
     let self = this;
-    this._logger.trace("About to instantiate cuddlefish loader.");
     this._refreshLoader();
     // set up the unloading
     require("unload").when( function() {
                               self._loader.unload();
                             });
-    this._logger.trace("Done instantiating remoteExperimentLoader.");
   },
 
   _refreshLoader: function() {
     if (this._loader) {
       this._loader.unload();
     }
-    /* Pass in "TestPilot.experiment" logger as the console object for
-     * all remote modules loaded through cuddlefish, so they will log their
-     * stuff to the same file as all other modules.  This logger is not
-     * technically a console object but as long as it has .debug, .info,
-     * .warn, and .error methods, it will work fine.*/
+    // Can we initialize cuddlefish loader without giving it a console /logger?
 
     /* Use a composite file system here, compositing codeStorage and a new
      * local file system so that securable modules loaded remotely can
@@ -211,9 +202,8 @@ exports.RemoteExperimentLoader.prototype = {
     let self = this;
     this._loader = Cuddlefish.Loader(
       {fs: new SecurableModule.CompositeFileSystem(
-         [self._jarStore, Cuddlefish.parentLoader.fs]),
-       console: this._expLogger
-      });
+         [self._jarStore, Cuddlefish.parentLoader.fs])
+      }); 
 
     // Clear all of our lists of studies/surveys/results when refreshing loader
     this._studyResults = [];
@@ -254,7 +244,7 @@ exports.RemoteExperimentLoader.prototype = {
     try {
       data = JSON.parse(data);
     } catch (e) {
-      this._logger.warn("Error parsing index.json: " + e );
+      // TODO log to console
       callback(false);
       return;
     }
@@ -269,7 +259,6 @@ exports.RemoteExperimentLoader.prototype = {
      * not be downloaded if we don't already have them.
      */
     if (data.maintain_experiments) {
-      this._logger.trace(data.maintain_experiments.length + " files to maintain.\n");
       for each (let studyFile in data.maintain_experiments) {
         this._experimentFileNames.push(studyFile);
       }
@@ -282,11 +271,9 @@ exports.RemoteExperimentLoader.prototype = {
      */
     let jarFiles = this.getLocalizedStudyInfo(data.new_experiments);
     let numFilesToDload = jarFiles.length;
-    this._logger.trace(numFilesToDload + " files to download.\n");
     let self = this;
 
     if (numFilesToDload == 0) {
-      this._logger.trace("Num files to download is 0, bailing\n");
       // nothing has changed --> callback false
       callback(false);
       return;
@@ -298,22 +285,18 @@ exports.RemoteExperimentLoader.prototype = {
       if (j.studyfile) {
         this._experimentFileNames.push(j.studyfile);
       }
-      this._logger.trace("I'm gonna go try to get the code for " + filename);
       let modDate = this._jarStore.getFileModifiedDate(filename);
 
       this._fileGetter(resolveUrl(this._baseUrl, filename),
       function onDone(code) {
         // code will be non-null if there is actually new code to download.
         if (code) {
-          self._logger.info("Downloaded jar file " + filename);
           self._jarStore.saveJarFile(filename, code, hash);
-          self._logger.trace("Saved code for: " + filename);
         } else {
-          self._logger.info("Nothing to download for " + filename);
+          // Code not changed -- do nothing -- TODO log filename to console?
         }
         numFilesToDload--;
         if (numFilesToDload == 0) {
-          self._logger.trace("Calling callback.");
           callback(true);
         }
       }, modDate);
@@ -328,7 +311,7 @@ exports.RemoteExperimentLoader.prototype = {
     try {
       data = JSON.parse(data);
     } catch (e) {
-      this._logger.warn("Error parsing index.json: " + e );
+      // TODO console
       return false;
     }
     // Read study results and legacy studies from index.
@@ -467,7 +450,6 @@ exports.RemoteExperimentLoader.prototype = {
     let self = this;
     // Unload everything before checking for updates, to be sure we
     // get the newest stuff.
-    this._logger.info("Unloading everything to prepare to check for updates.");
     this._refreshLoader();
 
     let modDate = 0;
@@ -479,19 +461,16 @@ exports.RemoteExperimentLoader.prototype = {
     let url = resolveUrl(self._baseUrl, indexFileName);
     self._fileGetter(url, function onDone(data) {
       if (data) {
-        self._logger.trace("Index file updated on server.\n");
         self._executeFreshIndexFile(data, callback);
         // cache index file contents so we can read them later if we can't get online.
         self._cacheIndexFile(data);
         // executeFreshIndexFile will call the callback.
       } else {
-        self._logger.info("Could not download index.json, using cached version.");
         let data = self._loadCachedIndexFile();
         if (data) {
           let success = self._executeCachedIndexFile(data);
           callback(success);
         } else {
-          self._logger.warn("Could not download index.json and no cached version.");
           // TODO Should display an error message to the user in this case.
           callback(false);
         }
@@ -503,14 +482,11 @@ exports.RemoteExperimentLoader.prototype = {
     /* Load up and return all studies/surveys (not libraries)
      * already stored in codeStorage.  Returns a dict with key =
      * the module name and value = the module object. */
-    this._logger.trace("GetExperiments called.");
     let remoteExperiments = {};
     this._loadErrors = [];
     for each (filename in this._experimentFileNames) {
-      this._logger.debug("GetExperiments is loading " + filename);
       try {
         remoteExperiments[filename] = this._loader.require(filename);
-        this._logger.info("Loaded " + filename + " OK.");
       } catch(e) {
         /* Turn the load-time errors into strings and store them, so we can display
          * them on a debug page or include them with a data upload!  (Don't store
@@ -519,8 +495,6 @@ exports.RemoteExperimentLoader.prototype = {
         let errStr = e.name + " on line " + e.lineNumber + " of file " +
           e.fileName + ": " + e.message;
         this._loadErrors.push(errStr);
-        this._logger.warn("Error loading " + filename);
-        this._logger.warn(errStr);
       }
     }
     return remoteExperiments;
