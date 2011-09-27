@@ -245,7 +245,7 @@ var TestPilotTask = {
     var wm = Cc["@mozilla.org/appshell/window-mediator;1"]
                        .getService(Ci.nsIWindowMediator);
     let window = wm.getMostRecentWindow("navigator:browser");
-    window.TestPilotWindowUtils.openChromeless(this.defaultUrl);
+    window.TestPilotWindowUtils.openInTab(this.defaultUrl);
     /* Advance the status when the user sees the page, so that we can stop
      * notifying them about stuff they've seen. */
     if (this._status == TaskConstants.STATUS_NEW) {
