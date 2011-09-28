@@ -78,12 +78,6 @@ var TestPilotWindowUtils;
         .getService(Ci.nsIPrefBranch);
       let url = prefs.getCharPref("extensions.testpilot.homepageURL");
       this.openInTab(url);
-    },
-
-    openFeedbackPage: function(menuItemChosen) {
-      Components.utils.import("resource://testpilot/modules/feedback.js");
-      FeedbackManager.setCurrUrl(this.getCurrentTabUrl());
-      this.openInTab(FeedbackManager.getFeedbackUrl(menuItemChosen));
     }
   };
 }());

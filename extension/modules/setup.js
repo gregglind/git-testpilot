@@ -90,16 +90,6 @@ let TestPilotSetup = {
     return this.__loader;
   },
 
-  __feedbackManager: null,
-  get _feedbackManager() {
-    if (this.__feedbackManager == null) {
-      let FeedbackModule = {};
-      Cu.import("resource://testpilot/modules/feedback.js", FeedbackModule);
-      this.__feedbackManager = FeedbackModule.FeedbackManager;
-    }
-    return this.__feedbackManager;
-  },
-
   __dataStoreModule: null,
   get _dataStoreModule() {
     if (this.__dataStoreModule == null) {
@@ -263,7 +253,6 @@ let TestPilotSetup = {
     if (appcontent) {
       appcontent.addEventListener("DOMContentLoaded", function(event) {
         let newUrl =  event.originalTarget.URL;
-        self._feedbackManager.fillInFeedbackPage(newUrl, window);
         for (let i = 0; i < self.taskList.length; i++) {
           self.taskList[i].onUrlLoad(newUrl, event);
         }
