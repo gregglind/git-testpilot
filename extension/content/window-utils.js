@@ -53,7 +53,7 @@ var TestPilotWindowUtils;
         let browserList = Browser.browsers;
         for (let i = 0; i < browserList.length; i++) {
           if (url == browserList[i].currentURI.spec) {
-            Browser.selectedTab = browserList[i];
+            Browser.selectedTab = Browser.tabs[i];
             return;
           }
         }
