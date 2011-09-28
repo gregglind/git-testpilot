@@ -36,25 +36,8 @@
  * ***** END LICENSE BLOCK ***** */
 
 var TestPilotWelcomePage = {
-  surveyId: "basic_panel_survey_2",
-
   onLoad: function() {
-    // Show link to pilot background survey only if user hasn't already
-    // taken it.
-    Components.utils.import("resource://testpilot/modules/setup.js");
-    Components.utils.import("resource://testpilot/modules/tasks.js");
-    Components.utils.import("resource://testpilot/modules/interface.js");
     this._setStrings();
-    let survey = TestPilotSetup.getTaskById(this.surveyId);
-    if (!survey) {
-      // Can happen if page loaded before all tasks loaded
-      window.setTimeout(function() { TestPilotWelcomePage.onLoad(); }, 2000);
-      return;
-    }
-    if (survey.status == TaskConstants.STATUS_NEW) {
-      document.getElementById("survey-link-p").setAttribute("style",
-                                                            "display:block");
-    }
   },
 
   openPilotSurvey: function() {
@@ -68,10 +51,7 @@ var TestPilotWelcomePage = {
       Components.classes["@mozilla.org/intl/stringbundle;1"].
         getService(Components.interfaces.nsIStringBundleService).
 	  createBundle("chrome://testpilot/locale/main.properties");
-    /* Use slightly different wording on this page depending on whether
-     * the user has the version with the doorhanger notifications (Firefox 4.0+)
-     * or not. */
-    let doorhangerUI = TestPilotUIBuilder.hasDoorhangerNotifications();
+
     let map = [
       { id: "page-title", stringKey: "testpilot.fullBrandName" },
       { id: "thank-you-text",
