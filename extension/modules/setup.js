@@ -138,6 +138,16 @@ let TestPilotSetup = {
     return this.__notifier;
   },
 
+  __console: null,
+  get _console() {
+    if (this.__console == null) {
+      let module = {};
+      Cu.import("resource://gre/modules/Services.jsm", module);
+      this.__console = module.Services.console;
+    }
+    return this.__console;
+  },
+
   globalStartup: function TPS__doGlobalSetup() {
     // Only ever run this stuff ONCE, on the first window restore.
     // Should get called by the Test Pilot component.
@@ -198,7 +208,7 @@ let TestPilotSetup = {
       });
     });
     } catch(e) {
-      // TODO log to console here instead
+      this._console.logStringMessage("Error in Test Pilot startup: " + e);
     }
   },
 
@@ -559,7 +569,7 @@ let TestPilotSetup = {
         return runOrNotFunc();
       }
     } catch (e) {
-      // TODO log to console here
+      this._console.logStringMessage("Error in Test Pilot requirements check: " + e);
     }
     return true;
   },
@@ -611,7 +621,7 @@ let TestPilotSetup = {
             }
             self.addTask(task);
           } catch (e) {
-            // TODO log e, filename to console
+            this._console.logStringMessage("Error loading Test Pilot experiment: " + e);
           }
         } // end for filename in experiments
 

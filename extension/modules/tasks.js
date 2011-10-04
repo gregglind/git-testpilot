@@ -45,6 +45,7 @@ const Ci = Components.interfaces;
 Components.utils.import("resource://testpilot/modules/Observers.js");
 Components.utils.import("resource://testpilot/modules/metadata.js");
 Components.utils.import("resource://testpilot/modules/string_sanitizer.js");
+Components.utils.import("resource://gre/modules/Services.jsm");
 
 const STATUS_PREF_PREFIX = "extensions.testpilot.taskstatus.";
 const START_DATE_PREF_PREFIX = "extensions.testpilot.startDate.";
@@ -498,7 +499,7 @@ TestPilotExperiment.prototype = {
       try {
         this._handlers.onNewWindow(window);
       } catch(e) {
-        // TODO log exception to console
+        Services.console.logStringMessage("Test Pilot error - new window handler: " + e);
       }
     }
   },
@@ -508,7 +509,7 @@ TestPilotExperiment.prototype = {
       try {
         this._handlers.onWindowClosed(window);
       } catch(e) {
-        // TODO log exception to console
+        Services.console.logStringMessage("Test Pilot error - window close handler: " + e);
       }
     }
   },
@@ -518,7 +519,7 @@ TestPilotExperiment.prototype = {
       try {
         this._handlers.onAppStartup();
       } catch(e) {
-        // TODO log exception to console
+        Services.console.logStringMessage("Test Pilot error - app start handler: " + e);
       }
     }
   },
@@ -528,7 +529,7 @@ TestPilotExperiment.prototype = {
       try {
         this._handlers.onAppShutdown();
       } catch(e) {
-        // TODO log exception to console
+        Services.console.logStringMessage("Test Pilot error - app shutdown handler: " + e);
       }
     }
   },
@@ -539,7 +540,7 @@ TestPilotExperiment.prototype = {
       try {
         this._handlers.onExperimentStartup(this._dataStore);
       } catch(e) {
-        // TODO log exception to console
+        Services.console.logStringMessage("Test Pilot error - exp. start handler: " + e);
       }
       this._startedUpHandlers = true;
     }
@@ -550,7 +551,7 @@ TestPilotExperiment.prototype = {
       try {
         this._handlers.onExperimentShutdown();
       } catch(e) {
-        // TODO console
+        Services.console.logStringMessage("Test Pilot error - exp. shutdown handler: " + e);
       }
       this._startedUpHandlers = false;
     }
@@ -561,7 +562,7 @@ TestPilotExperiment.prototype = {
       try {
         this._handlers.doExperimentCleanup();
       } catch(e) {
-        // TODO console
+        Services.console.logStringMessage("Test Pilot error - cleanup handler: " + e);
       }
     }
   },
@@ -571,7 +572,7 @@ TestPilotExperiment.prototype = {
       try {
         this._handlers.onEnterPrivateBrowsing();
       } catch(e) {
-        // TODO console
+        Services.console.logStringMessage("Test Pilot error - private on handler: " + e);
       }
     }
   },
@@ -581,7 +582,7 @@ TestPilotExperiment.prototype = {
       try {
         this._handlers.onExitPrivateBrowsing();
       } catch(e) {
-        // TODO console
+        Services.console.logStringMessage("Test Pilot error - private off handler: " + e);
       }
     }
   },
@@ -596,7 +597,7 @@ TestPilotExperiment.prototype = {
         }
       }
     } catch(e) {
-      // TODO console
+      Services.console.logStringMessage("Test Pilot error - metadata handler: " + e);
     }
     return null;
   },
@@ -848,7 +849,7 @@ TestPilotExperiment.prototype = {
         if (req.readyState == 4) {
           if (req.status == 200 || req.status == 201 || req.status == 202) {
             let location = req.getResponseHeader("Location");
-            // TODO log to console
+            Services.console.logStringMessage("Test Pilot uploaded data to " + location);
             if (self._uploadRetryTimer) {
               self._uploadRetryTimer.cancel(); // Stop retrying - it worked!
             }
@@ -867,7 +868,9 @@ TestPilotExperiment.prototype = {
 
             // TODO don't retry if status code is 401, 404, or...
             // any others?
-            // TODO log req.response text to console
+            Services.console.logStringMessage("Test Pilot couldn't upload data: " +
+                                              "status " + req.status + ", text = " +
+                                              req.responseText);
             self._uploadRetryTimer = Cc["@mozilla.org/timer;1"]
               .createInstance(Ci.nsITimer);
 
