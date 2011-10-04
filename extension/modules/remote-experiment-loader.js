@@ -203,7 +203,7 @@ exports.RemoteExperimentLoader.prototype = {
     this._loader = Cuddlefish.Loader(
       {fs: new SecurableModule.CompositeFileSystem(
          [self._jarStore, Cuddlefish.parentLoader.fs])
-      }); 
+      });
 
     // Clear all of our lists of studies/surveys/results when refreshing loader
     this._studyResults = [];
@@ -244,7 +244,7 @@ exports.RemoteExperimentLoader.prototype = {
     try {
       data = JSON.parse(data);
     } catch (e) {
-      // TODO log to console
+      // TODO log
       callback(false);
       return;
     }
