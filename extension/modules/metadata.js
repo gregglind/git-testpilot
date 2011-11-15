@@ -203,6 +203,13 @@ let MetadataCollector = {
     return metadata;
   },
 
+  isTablet: function MetadataCollector_isTablet() {
+    // See http://mxr.mozilla.org/mozilla-central/source/mobile/chrome/content/Util.js#164
+    let wm = Cc["@mozilla.org/appshell/window-mediator;1"].
+               getService(Ci.nsIWindowMediator);
+    return wm.getMostRecentWindow("navigator:browser").Util.isTablet();
+  },
+
   getMetadata: function MetadataCollector_getMetadata(callback) {
     let self = this;
     self.getTestPilotVersion(function(tpVersion) {
@@ -215,7 +222,8 @@ let MetadataCollector = {
                          tpVersion: tpVersion,
                          surveyAnswers: self.getSurveyAnswers(),
                          updateChannel: self.getUpdateChannel(),
-                         graphicsAdapter: self.getGraphicsAdapter()};
+                         graphicsAdapter: self.getGraphicsAdapter(),
+                         isTablet: self.isTablet()};
         callback(self.appendSystemInfo(metadata));
       });
     });
