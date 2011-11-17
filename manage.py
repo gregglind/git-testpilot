@@ -95,6 +95,9 @@ def resolve_options(options, ext_subdir = EXT_SUBDIR):
 
     options.my_dir = os.path.dirname(os.path.abspath(options.pavement_file))
     options.profile_dir = find_profile_dir(options.profile)
+    if not options.profile_dir:
+        options.profile_dir = options.profile # we take a guess it's a path
+
     options.path_to_ext_root = os.path.join(options.my_dir, ext_subdir)
 
     options.ext_id = get_install_rdf_property(options.path_to_ext_root,
@@ -145,7 +148,7 @@ JSBRIDGE_OPTIONS = [("port=", "p", "Port to use for jsbridge communication."),
 @task
 @cmdopts(INSTALL_OPTIONS)
 def install(options):
-    """Install the extension to a Firefox profile."""
+    """Install the extension to a Firefox profile -  use -p [fxprofilename|profile/path]"""
 
     resolve_options(options)
     remove_extension(options)
@@ -156,8 +159,9 @@ def install(options):
     fileobj = open(options.extension_file, "w")
     fileobj.write(options.firefox_path_to_ext_root)
     fileobj.close()
-    print "Extension '%s' installed to profile '%s'." % (options.ext_id,
-                                                         options.profile)
+    print "Extension '%s' installed to profile '%s'.  Wrote to:  '%s'" % (options.ext_id,
+                                                         options.profile, 
+                                                         options.extension_file)
 
 @task
 @cmdopts(INSTALL_OPTIONS)
