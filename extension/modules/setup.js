@@ -120,6 +120,17 @@ let TestPilotSetup = {
     return this.__dataStoreModule;
   },
 
+  __extensionUpdater: null,
+  get _extensionUpdater() {
+    if (this.__extensionUpdater == null) {
+      let ExUpdate = {};
+      Cu.import("resource://testpilot/modules/extension-update.js",
+                   ExUpdate);
+      this.__extensionUpdater = ExUpdate.TestPilotExtensionUpdate;
+    }
+    return this.__extensionUpdater;
+  },
+
   __logRepo: null,
   get _logRepo() {
     // Note: This hits the disk so it's an expensive operation; don't call it
@@ -175,15 +186,6 @@ let TestPilotSetup = {
       this.__obs = this._loader.require("observer-service");
     }
     return this.__obs;
-  },
-
-  get _notifier() {
-    delete this._notifier;
-    return this._notifier = TestPilotUIBuilder.getNotificationManager();
-  },
-
-  _getStr: function(str) {
-    return this._stringBundle.GetStringFromName(str);
   },
 
   globalStartup: function TPS__doGlobalSetup() {
@@ -319,7 +321,7 @@ let TestPilotSetup = {
       appcontent.addEventListener("DOMContentLoaded", function(event) {
         let newUrl =  event.originalTarget.URL;
         self._feedbackManager.fillInFeedbackPage(newUrl, window);
-        for (let i = 0; i < self.taskList.length; i++) {
+        for (i = 0; i < self.taskList.length; i++) {
           self.taskList[i].onUrlLoad(newUrl, event);
         }
       }, true);
@@ -337,82 +339,173 @@ let TestPilotSetup = {
     this.taskList.push(testPilotTask);
   },
 
-  _submitFromNotification: function(win, task) {
+  _showNotification: function TPS__showNotification(task, fragile, text, title,
+                                                    iconClass, showSubmit,
+						    showAlwaysSubmitCheckbox,
+                                                    linkText, linkUrl,
+						    isExtensionUpdate,
+                                                    onCloseCallback) {
+    /* TODO: Refactor the arguments of this function, it's getting really
+     * unweildly.... maybe pass in an object, or even make a notification an
+     * object that you create and then call .show() on. */
+
+    // If there are multiple windows, show notifications in the frontmost
+    // window.
+    let window = this._getFrontBrowserWindow();
+    let doc = window.document;
+    let popup = doc.getElementById("pilot-notification-popup");
+
+    let anchor, xOffset;
+    if (TestPilotUIBuilder.channelUsesFeedback()) {
+      /* If we're in the Ffx4Beta version, popups hang down from the feedback
+       * button. In the standalone extension version, they hang down from
+       * a temporary Test Pilot icon that appears in the toolbar. */
+      anchor = doc.getElementById("feedback-menu-button");
+      xOffset = 0;
+    } else {
+      anchor = doc.getElementById("tp-notification-popup-icon");
+      anchor.hidden = false;
+      /* By default, right edge of notification will line up with right edge of anchor.
+       * That looks fine for feedback button, but the test pilot icon is narrower and
+       * this alignment causes the pointy part of the arrow to miss the icon.  Fix this
+       * by shifting the notification to the right 24 pixels. */
+      xOffset = 24;
+    }
+    let textLabel = doc.getElementById("pilot-notification-text");
+    let titleLabel = doc.getElementById("pilot-notification-title");
+    let icon = doc.getElementById("pilot-notification-icon");
+    let submitBtn = doc.getElementById("pilot-notification-submit");
+    let closeBtn = doc.getElementById("pilot-notification-close");
+    let link = doc.getElementById("pilot-notification-link");
+    let alwaysSubmitCheckbox =
+      doc.getElementById("pilot-notification-always-submit-checkbox");
     let self = this;
-    task.upload( function(success) {
-      if (success) {
-        let features = {
-          text: self._getStr("testpilot.notification.thankYouForUploadingData.message"),
-          title: self._getStr("testpilot.notification.thankYouForUploadingData"),
-          iconClass:"study-submitted",
-          fragile: true
-        };
-        let actions = [{
-          label: self._getStr("testpilot.notification.seeYourData.label"),
-          customUiType: "link",
-          accessKey: self._getStr("testpilot.notification.seeYourData.accesskey"),
-          callback: function() { task.loadPage(); }
-        }];
-        self._notifier.showNotification(win, features, actions);
+
+    // Set all appropriate attributes on popup:
+    if (isExtensionUpdate) {
+      popup.setAttribute("tpisextensionupdate", "true");
+    }
+    popup.setAttribute("noautohide", !fragile);
+    titleLabel.setAttribute("value", title);
+    while (textLabel.lastChild) {
+      textLabel.removeChild(textLabel.lastChild);
+    }
+    textLabel.appendChild(doc.createTextNode(text));
+    if (iconClass) {
+      // css will set the image url based on the class.
+      icon.setAttribute("class", iconClass);
+    }
+
+    alwaysSubmitCheckbox.setAttribute("hidden", !showAlwaysSubmitCheckbox);
+    if (showSubmit) {
+      if (isExtensionUpdate) {
+        submitBtn.setAttribute("label",
+	  this._stringBundle.GetStringFromName(
+	    "testpilot.notification.update"));
+	submitBtn.onclick = function() {
+          this._extensionUpdater.check(EXTENSION_ID);
+          self._hideNotification(window, onCloseCallback);
+	};
       } else {
-        // TODO any point in showing an error message here?
-      } }
-    );
+        submitBtn.setAttribute("label",
+	  this._stringBundle.GetStringFromName("testpilot.submit"));
+        // Functionality for submit button:
+        submitBtn.onclick = function() {
+          self._hideNotification(window, onCloseCallback);
+          if (showAlwaysSubmitCheckbox && alwaysSubmitCheckbox.checked) {
+            self._prefs.setValue(ALWAYS_SUBMIT_DATA, true);
+          }
+          task.upload( function(success) {
+            if (success) {
+              self._showNotification(
+		task, true,
+                self._stringBundle.GetStringFromName(
+		  "testpilot.notification.thankYouForUploadingData.message"),
+                self._stringBundle.GetStringFromName(
+		  "testpilot.notification.thankYouForUploadingData"),
+		"study-submitted", false, false,
+                self._stringBundle.GetStringFromName("testpilot.moreInfo"),
+		task.defaultUrl);
+            } else {
+              // TODO any point in showing an error message here?
+            }
+          });
+        };
+      }
+    }
+    submitBtn.setAttribute("hidden", !showSubmit);
+
+    // Create the link if specified:
+    if (linkText && (linkUrl || task)) {
+      link.setAttribute("value", linkText);
+      link.onclick = function(event) {
+        if (event.button == 0) {
+	  if (task) {
+            task.loadPage();
+	  } else {
+            self._openChromeless(linkUrl);
+	  }
+          self._hideNotification(window, onCloseCallback);
+        }
+      };
+      link.setAttribute("hidden", false);
+    } else {
+      link.setAttribute("hidden", true);
+    }
+
+    closeBtn.onclick = function() {
+      self._hideNotification(window, onCloseCallback);
+    };
+
+    // Show the popup:
+    popup.hidden = false;
+    popup.setAttribute("open", "true");
+    popup.openPopup( anchor, "after_end", xOffset, 0);
   },
 
-  _showSubmitNotification: function(task) {
-    let win = this._getFrontBrowserWindow();
-    let self = this;
-    let features = {
-      text: self._stringBundle.formatStringFromName(
-        "testpilot.notification.readyToSubmit.message", [task.title], 1),
-      title: self._getStr("testpilot.notification.readyToSubmit"),
-      iconClass: "study-finished"
-    };
-    let actions = [];
-    actions.push({
-      label: self._getStr("testpilot.submit"),
-      customUiType: "button",
-      accessKey: self._getStr("testpilot.notification.submit.accesskey"),
-      callback: function() { self._submitFromNotification(win, task); }
-    });
-    actions.push({
-      label: self._getStr("testpilot.notification.seeYourData.label"),
-      customUiType: "link",
-      accessKey: self._getStr("testpilot.notification.seeYourData.accesskey"),
-      callback: function() { task.loadPage(); }
-    });
-    actions.push({
-      label: self._getStr("testpilot.notification.seeAllStudies.label"),
-      accessKey: self._getStr("testpilot.notification.seeAllStudies.accesskey"),
-      callback: function() {
-         self._getFrontBrowserWindow().TestPilotWindowUtils.openAllStudiesWindow();
-      }
-    });
-    actions.push({
-      label: self._getStr("testpilot.notification.cancel.label"),
-      accessKey: self._getStr("testpilot.notification.cancel.accesskey"),
-      callback: function() { task.optOut(null, null); }
-    });
-    actions.push({
-      label: self._getStr("testpilot.notification.alwaysSubmit.label"),
-      customUiType: "checkbox",
-      accessKey: self._getStr("testpilot.notification.alwaysSubmit.accesskey"),
-      callback: function() {
-        self._submitFromNotification(win, task);
-        self._prefs.setValue(ALWAYS_SUBMIT_DATA, true);
-      }
-    });
-    this._notifier.showNotification(win, features, actions);
+  _openChromeless: function TPS__openChromeless(url) {
+    let window = this._getFrontBrowserWindow();
+    window.TestPilotWindowUtils.openChromeless(url);
+  },
+
+  _hideNotification: function TPS__hideNotification(window, onCloseCallback) {
+    /* Note - we take window as an argument instead of just using the frontmost
+     * window because the window order might have changed since the notification
+     * appeared and we want to be sure we close the notification in the same
+     * window as we opened it in! */
+    let popup = window.document.getElementById("pilot-notification-popup");
+    popup.hidden = true;
+    popup.setAttribute("open", "false");
+    popup.removeAttribute("tpisextensionupdate");
+    popup.hidePopup();
+
+    if (!TestPilotUIBuilder.channelUsesFeedback()) {
+      // If we're using the temporary test pilot icon as an anchor, hide it now
+      let icon = window.document.getElementById("tp-notification-popup-icon");
+      icon.hidden = true;
+    }
+    if (onCloseCallback) {
+      onCloseCallback();
+    }
+  },
+
+  _isShowingUpdateNotification : function() {
+    let window = this._getFrontBrowserWindow();
+    let popup = window.document.getElementById("pilot-notification-popup");
+
+    return popup.hasAttribute("tpisextensionupdate");
   },
 
   _notifyUserOfTasks: function TPS__notifyUser() {
     // Check whether there are tasks needing attention, and if any are
     // found, show the popup door-hanger thingy.
     let i, task;
-    let self = this;
     let TaskConstants = this._taskModule.TaskConstants;
-    let win = this._getFrontBrowserWindow();
+
+    // if showing extension update notification, don't do anything.
+    if (this._isShowingUpdateNotification()) {
+      return;
+    }
 
     // Highest priority is if there is a finished test (needs a decision)
     if (this._prefs.getValue(POPUP_SHOW_ON_FINISH, false)) {
@@ -420,7 +513,18 @@ let TestPilotSetup = {
         task = this.taskList[i];
         if (task.status == TaskConstants.STATUS_FINISHED) {
           if (!this._prefs.getValue(ALWAYS_SUBMIT_DATA, false)) {
-            this._showSubmitNotification(task);
+            this._showNotification(
+	      task, false,
+	      this._stringBundle.formatStringFromName(
+		"testpilot.notification.readyToSubmit.message", [task.title],
+		1),
+	      this._stringBundle.GetStringFromName(
+		"testpilot.notification.readyToSubmit"),
+	      "study-finished", true, true,
+	      this._stringBundle.GetStringFromName("testpilot.moreInfo"),
+	      task.defaultUrl);
+            // We return after showing something, because it only makes
+            // sense to show one notification at a time!
             return;
           }
         }
@@ -435,62 +539,33 @@ let TestPilotSetup = {
         if (task.status == TaskConstants.STATUS_PENDING ||
             task.status == TaskConstants.STATUS_NEW) {
           if (task.taskType == TaskConstants.TYPE_EXPERIMENT) {
-            let features = {
-	      text: self._stringBundle.formatStringFromName(
+	    this._showNotification(
+	      task, false,
+	      this._stringBundle.formatStringFromName(
 		"testpilot.notification.newTestPilotStudy.pre.message",
 		[task.title], 1),
-	      title: self._getStr("testpilot.notification.newTestPilotStudy"),
-	      iconClass: "new-study",
-              closeCallback: function() {
+	      this._stringBundle.GetStringFromName(
+		"testpilot.notification.newTestPilotStudy"),
+	      "new-study", false, false,
+	      this._stringBundle.GetStringFromName("testpilot.moreInfo"),
+	      task.defaultUrl, false, function() {
                 /* on close callback (Bug 575767) -- when the "new study
                  * starting" popup is dismissed, then the study can start. */
-                // closeCallback gets called after cancelCallback, so make sure study isn't already
-                // canceled.
-                if (task.status < TaskConstants.STATUS_STARTING) {
-                  task.changeStatus(TaskConstants.STATUS_STARTING, true);
-                  TestPilotSetup.reloadRemoteExperiments();
-                }
-              }
-            };
-            let actions = [];
-            actions.push({
-              label: self._getStr("testpilot.moreInfo"),
-              customUiType: "link",
-              accessKey: self._getStr("testpilot.notification.moreInfo.accesskey"),
-              callback: function() { task.loadPage(); }
-            });
-            actions.push({
-              label: self._getStr("testpilot.notification.seeAllStudies.label"),
-              accessKey: self._getStr("testpilot.notification.seeAllStudies.accesskey"),
-              callback: function() {win.TestPilotWindowUtils.openAllStudiesWindow();}
-            });
-            actions.push({
-              label: self._getStr("testpilot.notification.dontShowNew.label"),
-              accessKey: self._getStr("testpilot.notification.dontShowNew.accesskey"),
-              callback: function() { self._prefs.setValue(POPUP_SHOW_ON_NEW, false);}
-            });
-            actions.push({
-              label: self._getStr("testpilot.notification.cancel.label"),
-              accessKey: self._getStr("testpilot.notification.cancel.accesskey"),
-              callback: function() { task.optOut(null, null); }
-            });
-            this._notifier.showNotification(win, features, actions);
+                task.changeStatus(TaskConstants.STATUS_STARTING, true);
+                TestPilotSetup.reloadRemoteExperiments();
+              });
             return;
           } else if (task.taskType == TaskConstants.TYPE_SURVEY) {
-            let features = {
-	      text: self._stringBundle.formatStringFromName(
+	    this._showNotification(
+	      task, false,
+	      this._stringBundle.formatStringFromName(
 		"testpilot.notification.newTestPilotSurvey.message",
 		[task.title], 1),
-              title: self._getStr("testpilot.notification.newTestPilotSurvey"),
-	      iconClass: "new-study"
-            };
-            let actions = [{
-              label: self._getStr("testpilot.takeSurvey"),
-              customUiType: "button",
-              accessKey: self._getStr("testpilot.notification.takeSurvey.accesskey"),
-	      callback: function() { task.loadPage(); }
-            }];
-            this._notifier.showNotification(win, features, actions);
+              this._stringBundle.GetStringFromName(
+		"testpilot.notification.newTestPilotSurvey"),
+	      "new-study", false, false,
+	      this._stringBundle.GetStringFromName("testpilot.moreInfo"),
+	      task.defaultUrl);
             task.changeStatus(TaskConstants.STATUS_IN_PROGRESS, true);
             return;
           }
@@ -504,25 +579,20 @@ let TestPilotSetup = {
         task = this.taskList[i];
         if (task.taskType == TaskConstants.TYPE_RESULTS &&
             task.status == TaskConstants.STATUS_NEW) {
-              let features = {
-	        text: self._stringBundle.formatStringFromName(
-	          "testpilot.notification.newTestPilotResults.message",
-	          [task.title], 1),
-                title: self._getStr("testpilot.notification.newTestPilotResults"),
-	        iconClass: "new-results"
-              };
-              let actions = [{
-                label: self._getStr("testpilot.moreInfo"),
-                customUiType: "link",
-                accessKey: self._getStr("testpilot.notification.moreInfo.accesskey"),
-	        callback: function() { task.loadPage(); }
-              }];
-              self._notifier.showNotification(win, features, actions);
-              // TODO have a "don't tell me about these anymore" option?
-              /* Having shown the notification, advance the status of the
-               * results, so that this notification won't be shown again */
-              task.changeStatus(TaskConstants.STATUS_ARCHIVED, true);
-              return;
+	  this._showNotification(
+	    task, true,
+	    this._stringBundle.formatStringFromName(
+	      "testpilot.notification.newTestPilotResults.message",
+	      [task.title], 1),
+            this._stringBundle.GetStringFromName(
+	      "testpilot.notification.newTestPilotResults"),
+	    "new-results", false, false,
+	    this._stringBundle.GetStringFromName("testpilot.moreInfo"),
+	    task.defaultUrl);
+          // Having shown the notification, advance the status of the
+          // results, so that this notification won't be shown again
+          task.changeStatus(TaskConstants.STATUS_ARCHIVED, true);
+          return;
         }
       }
     }
@@ -547,21 +617,16 @@ let TestPilotSetup = {
   },
 
   _onTaskDataAutoSubmitted: function(subject, data) {
-    let task = subject;
-    let features = {
-      text: self._stringBundle.formatStringFromName(
+    this._showNotification(
+      subject, true,
+      this._stringBundle.formatStringFromName(
 	"testpilot.notification.autoUploadedData.message",
 	[subject.title], 1),
-      title: self._getStr("testpilot.notification.autoUploadedData"),
-      iconClass: "study-submitted"
-    };
-    let actions = [{
-      label: self._getStr("testpilot.notification.seeYourData.label"),
-      customUiType: "link",
-      accessKey: self._getStr("testpilot.notification.seeYourData.accesskey"),
-      callback: function() { task.loadPage(); }
-    }];
-    this._notifier.showNotification(win, features, actions);
+      this._stringBundle.GetStringFromName(
+	"testpilot.notification.autoUploadedData"),
+      "study-submitted", false, false,
+      this._stringBundle.GetStringFromName("testpilot.moreInfo"),
+      subject.defaultUrl);
   },
 
   getVersion: function TPS_getVersion(callback) {
@@ -602,15 +667,17 @@ let TestPilotSetup = {
     }
   },
 
-  _experimentRequirementsAreMet: function TPS__requirementsMet(experiment) {
-    /* Returns true if we we meet the requirements to run this experiment
-     * (e.g. meet the minimum Test Pilot version and Firefox version)
-     * false if not.
-     * Default is always to run the study - return true UNLESS the study
-     * specifies a requirement that we don't meet. */
+  _checkExperimentRequirements: function TPS__requirementsMet(experiment, callback) {
+    /* Async.
+     * Calls callback with a true if we we meet the requirements to run this
+     * experiment (e.g. meet the minimum Test Pilot version and Firefox version)
+     * calls callback with a false if not.
+     * All of the requirements that a study can specify - firefox version, test pilot
+     * version, filter function etc - default to true if not provided. callback(true)
+     * UNLESS the study specifies a requirement that we don't meet. */
     let logger = this._logger;
     try {
-      let minTpVer, minFxVer, expName, runOrNotFunc, randomDeployment;
+      let minTpVer, minFxVer, expName, filterFunc, randomDeployment;
       /* Could be an experiment, which specifies experimentInfo, or survey,
        * which specifies surveyInfo. */
       let info = experiment.experimentInfo ?
@@ -619,26 +686,40 @@ let TestPilotSetup = {
       if (!info) {
         // If neither one is supplied, study lacks metadata required to run
         logger.warn("Study lacks minimum metadata to run.");
-        return false;
+        callback(false);
+        return;
       }
       minTpVer = info.minTPVersion;
       minFxVer = info.minFXVersion;
       expName =  info.testName;
-      runOrNotFunc = info.runOrNotFunc;
+      filterFunc = info.filter;
       randomDeployment = info.randomDeployment;
 
       // Minimum test pilot version:
       if (minTpVer && this._isNewerThanMe(minTpVer)) {
         logger.warn("Not loading " + expName);
         logger.warn("Because it requires Test Pilot version " + minTpVer);
-        return false;
+
+        // Let user know there is a newer version of Test Pilot available:
+        if (!this._isShowingUpdateNotification()) {
+          this._showNotification(
+	    null, false,
+	    this._stringBundle.GetStringFromName(
+	      "testpilot.notification.extensionUpdate.message"),
+	    this._stringBundle.GetStringFromName(
+	      "testpilot.notification.extensionUpdate"),
+	    "update-extension", true, false, "", "", true);
+	}
+        callback(false);
+        return;
       }
 
       // Minimum firefox version:
       if (minFxVer && this._isNewerThanFirefox(minFxVer)) {
         logger.warn("Not loading " + expName);
         logger.warn("Because it requires Firefox version " + minFxVer);
-        return false;
+        callback(false);
+        return;
       }
 
       // Random deployment (used to give study to random subsample of users)
@@ -653,22 +734,26 @@ let TestPilotSetup = {
           this._prefs.setValue(prefName, myRoll);
         }
         if (myRoll < randomDeployment.minRoll) {
-          return false;
+          callback(false);
+          return;
         }
         if (myRoll > randomDeployment.maxRoll) {
-          return false;
+          callback(false);
+          return;
         }
       }
 
       /* The all-purpose, arbitrary code "Should this study run?" function - if
-       * provided, use its return value. */
-      if (runOrNotFunc) {
-        return runOrNotFunc();
+       * provided, use it.  (filterFunc must be asynchronous too!)*/
+      if (filterFunc) {
+        filterFunc(callback);
+        return;
       }
     } catch (e) {
       logger.warn("Error in requirements check " +  e);
+      callback(false); // if something went wrong, err on the side of not running the study
     }
-    return true;
+    callback(true);
   },
 
   checkForTasks: function TPS_checkForTasks(callback) {
@@ -689,65 +774,71 @@ let TestPilotSetup = {
         // downloading new contents or not...
         let experiments = self._remoteExperimentLoader.getExperiments();
 
+        let numExperimentsProcessed = 0;
+        let numExperiments = Object.keys(experiments).length;
         for (let filename in experiments) {
-          if (!self._experimentRequirementsAreMet(experiments[filename])) {
-            continue;
-          }
-          try {
-            // The try-catch ensures that if something goes wrong in loading one
-            // experiment, the other experiments after that one still get loaded.
-            logger.trace("Attempting to load experiment " + filename);
-
-            let task;
-            // Could be a survey: check if surveyInfo is exported:
-            if (experiments[filename].surveyInfo != undefined) {
-              let sInfo = experiments[filename].surveyInfo;
-              // If it supplies questions, it's a built-in survey.
-              // If not, it's a web-based survey.
-              if (!sInfo.surveyQuestions) {
-                task = new self._taskModule.TestPilotWebSurvey(sInfo);
-              } else {
-                task = new self._taskModule.TestPilotBuiltinSurvey(sInfo);
+          self._checkExperimentRequirements(experiments[filename], function(requirementsMet) {
+            if (requirementsMet) {
+              try {
+                /* The try-catch ensures that if something goes wrong in loading one
+                 * experiment, the other experiments after that one still get loaded. */
+                logger.trace("Attempting to load experiment " + filename);
+                let task;
+                // Could be a survey: check if surveyInfo is exported:
+                if (experiments[filename].surveyInfo != undefined) {
+                  let sInfo = experiments[filename].surveyInfo;
+                  // If it supplies questions, it's a built-in survey.
+                  // If not, it's a web-based survey.
+                  if (!sInfo.surveyQuestions) {
+                    task = new self._taskModule.TestPilotWebSurvey(sInfo);
+                  } else {
+                    task = new self._taskModule.TestPilotBuiltinSurvey(sInfo);
+                  }
+                } else {
+                  // This one must be an experiment.
+                  let expInfo = experiments[filename].experimentInfo;
+                  let dsInfo = experiments[filename].dataStoreInfo;
+                  let dataStore = new self._dataStoreModule.ExperimentDataStore(
+                    dsInfo.fileName, dsInfo.tableName, dsInfo.columns );
+                  let webContent = experiments[filename].webContent;
+                  task = new self._taskModule.TestPilotExperiment(expInfo,
+                                                                  dataStore,
+                                                                  experiments[filename].handlers,
+                                                                  webContent);
+                }
+                self.addTask(task);
+                logger.info("Loaded task " + filename);
+              } catch (e) {
+                logger.warn("Failed to load task " + filename + ": " + e);
               }
-            } else {
-              // This one must be an experiment.
-              let expInfo = experiments[filename].experimentInfo;
-              let dsInfo = experiments[filename].dataStoreInfo;
-              let dataStore = new self._dataStoreModule.ExperimentDataStore(
-                dsInfo.fileName, dsInfo.tableName, dsInfo.columns );
-              let webContent = experiments[filename].webContent;
-              task = new self._taskModule.TestPilotExperiment(expInfo,
-                                                              dataStore,
-                                                              experiments[filename].handlers,
-                                                              webContent);
-            }
-            self.addTask(task);
-            logger.info("Loaded task " + filename);
-          } catch (e) {
-            logger.warn("Failed to load task " + filename + ": " + e);
-          }
+            } // end if requirements met
+            // whether loading succeeded or failed, we're done processing that one; increment the count:
+            numExperimentsProcessed ++;
+            if (numExperimentsProcessed == numExperiments) {
+              // all done with experiments -- do results and legacy studies:
+              let results = self._remoteExperimentLoader.getStudyResults();
+              for (let r in results) {
+                let studyResult = new self._taskModule.TestPilotStudyResults(results[r]);
+                self.addTask(studyResult);
+              }
+
+              /* Legacy studies = stuff we no longer have the code for, but
+               * if the user participated in it we want to keep that metadata. */
+              let legacyStudies = self._remoteExperimentLoader.getLegacyStudies();
+              for (let l in legacyStudies) {
+                let legacyStudy = new self._taskModule.TestPilotLegacyStudy(legacyStudies[l]);
+                self.addTask(legacyStudy);
+              }
+
+              // Finally, call the callback if there is one
+              if (callback) {
+                callback();
+              }
+            } // end of if all experiments are processed
+          }); // end of call to check experiment requirements
         } // end for filename in experiments
-
-        // Handling new results is much simpler:
-        let results = self._remoteExperimentLoader.getStudyResults();
-        for (let r in results) {
-          let studyResult = new self._taskModule.TestPilotStudyResults(results[r]);
-          self.addTask(studyResult);
-        }
-
-        /* Legacy studies = stuff we no longer have the code for, but
-         * if the user participated in it we want to keep that metadata. */
-        let legacyStudies = self._remoteExperimentLoader.getLegacyStudies();
-        for (let l in legacyStudies) {
-          let legacyStudy = new self._taskModule.TestPilotLegacyStudy(legacyStudies[l]);
-          self.addTask(legacyStudy);
-        }
-
-        if (callback) {
-          callback();
-        }
       }
-    );
+    ); // end of call to checkForUpdates
   },
 
   reloadRemoteExperiments: function TPS_reloadRemoteExperiments(callback) {

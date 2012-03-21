@@ -38,7 +38,7 @@
  * do any other tweaking to UI needed to work correctly with user's version.
  * 1. Fx 3.*, default update channel -> TP icon menu in status bar
  * 2. beta update channel -> Feedback button in toolbar, customizable
- * 3. Fx 4.*, default update channel -> TP icon in toolbar, doorhanger notifications
+ * 3. Fx 4.*, default update channel -> TP icon menu in add-on bar
  */
 
 // A lot of the stuff that's currently in browser.js can get moved here.
@@ -75,17 +75,6 @@ var TestPilotUIBuilder = {
     delete this._appVersion;
     return this._appVersion = Cc["@mozilla.org/xre/app-info;1"]
       .getService(Ci.nsIXULAppInfo).version;
-  },
-
-  get _hasDoorhangerNotifications() {
-    delete this._hasDoorhangerNotifications;
-    try {
-      let popupModule = {};
-      Components.utils.import("resource://gre/modules/PopupNotifications.jsm", popupModule);
-      return this._hasDoorhangerNotifications = true;
-    } catch (e) {
-      return this._hasDoorhangerNotifications = false;
-    }
   },
 
   buildTestPilotInterface: function(window) {
@@ -169,45 +158,8 @@ var TestPilotUIBuilder = {
       window.document.loadOverlay("chrome://testpilot/content/feedback-browser.xul", null);
       this.buildFeedbackInterface(window);
     } else {
-      /* Overlay Test Pilot XUL -- that means the base overlay tp-browser.xul to make the menu,
-       * and another overlay (either popupNotifications or customNofications) to make the
-       * notification system.*/
-      let notfnOverlay = (this._hasDoorhangerNotifications ?
-                          "chrome://testpilot/content/tp-browser-popupNotifications.xul" :
-                          "chrome://testpilot/content/tp-browser-customNotifications.xul");
-      /* Trying to start one overlay before the other is done caues problems, so use an observer
-       * to make the 2nd overlay wait until the 1st is done */
-      window.document.loadOverlay("chrome://testpilot/content/tp-browser.xul",
-                                  {observe: function(subject, topic, data) {
-                                     if (topic == "xul-overlay-merged") {
-                                       window.document.loadOverlay(notfnOverlay, null);
-                                     }
-                                    }});
+      window.document.loadOverlay("chrome://testpilot/content/tp-browser.xul", null);
       this.buildTestPilotInterface(window);
     }
-  },
-
-  getNotificationManager: function() {
-    /* Returns a notification manager object (see notifications.js) appropriate to the Firefox
-     * version.  Hidden dependency: the returned notification manager will only work if
-     * buildCorrectInterface has been called for the window where it is being used.
-     */
-
-    let ntfnModule = {};
-    Cu.import("resource://testpilot/modules/notifications.js", ntfnModule);
-
-    /* Use custom notifications anchored to the Feedback button, with tail up,
-     * if there is a Feedback button */
-    if (this.channelUsesFeedback()) {
-      return new ntfnModule.CustomNotificationManager("feedback-menu-button", true);
-    }
-    /* If there's no feedback button, but popup notifications are available,
-     * use those. */
-    if (this._hasDoorhangerNotifications) {
-      return new ntfnModule.PopupNotificationManager();
-    }
-    /* If neither one is available, use custom notifications anchored to Test Pilot
-     * status icon, with tail down. */
-    return new ntfnModule.CustomNotificationManager("pilot-notifications-button", false);
   }
 };

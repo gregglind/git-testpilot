@@ -1,6 +1,4 @@
 <?xml version="1.0"?>
-<?xml-stylesheet href="chrome://testpilot/content/browser.css" type="text/css"?>
-<?xml-stylesheet href="chrome://testpilot-os/skin/feedback.css" type="text/css"?>
 
 <!DOCTYPE overlay [
   <!ENTITY % testpilotDTD SYSTEM "chrome://testpilot/locale/main.dtd">
@@ -31,7 +29,7 @@
       <hbox align="right"><label id="pilot-notification-link" /></hbox>
       <hbox>
         <checkbox id="pilot-notification-always-submit-checkbox"
-          label="&testpilot.settings.alwaysSubmitData.shortLabel;" />
+          label="&testpilot.settings.alwaysSubmitData.label;" />
         <spacer flex="1" />
       </hbox>
       <hbox align="right">

@@ -19,33 +19,9 @@
   -moz-padding-start: 5px;
 }
 
-#pilot-notifications-button {
-  margin-right: 10px;
-}
-
-/* For Firefox 4 built-in popup notification system */
 #tp-notification-popup-icon {
   list-style-image: url("chrome://testpilot/skin/testpilot_16x16.png");
 }
-
-#tp-notification-popup-box[anchorid="tp-notification-popup-icon"] > #tp-notification-popup-icon {
-  display: -moz-box;
-}
-
-#testpilot-notification {
-  -moz-binding: url("chrome://testpilot/content/notificationBindings.xml#testpilot-notification");
-}
-
-/* hide menu separator and "not now" item: */
-#testpilot-notification menuseparator { display: none }
-#testpilot-notification .popup-notification-closeitem { display: none }
-
-.testpilot-notification-title {
-    text-align: center;
-    font-size: large;
-}
-
-/* For older notification system */
 
 /* Popup Bounding Box */
 #pilot-notification-popup {
@@ -55,20 +31,7 @@
   margin-top: -6px;
   margin-right: -3px;
   width: 480px;
-}
-
-.tail-up {
- -moz-border-image: url(chrome://testpilot-os/skin/notification-tail-up.png) 26 56 22 18 / 26px 56px 22px 18px round stretch;
-}
-
-/* tail-down uses the old styling; it doesn't look as good as the new styling,
-   but the new styling doesn't work on 3.6.
-   TODO: If someone is using 3.7.* or 4.* but is NOT on the beta channel and
-   installed Test Pilot from AMO, they should get the new styling, similar
-   to .tail-up! */
-.tail-down {
- -moz-border-image: url(chrome://testpilot/skin/notification-tail-down.png) 26 50 22 18 / 26px 50px 22px 18px repeat;
- color: white;
+  -moz-border-image: url(chrome://testpilot-os/skin/notification-tail-up.png) 26 56 22 18 / 26px 56px 22px 18px round stretch;
 }
 
 .pilot-notification-popup-container {
@@ -82,9 +45,14 @@
   margin-bottom: 12px;
 }
 
-#pilot-notification-text,
+#pilot-notification-text {
+  margin-bottom: 5px;
+}
+
 #pilot-notification-link {
   margin-bottom: 5px;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 #pilot-notification-close {
@@ -253,11 +221,6 @@ image.results-thumbnail {
     max-height: 90px;
     max-width:  90px;
     margin: 10px;
-}
-
-.notification-link {
-    text-decoration: underline;
-    cursor: pointer;
 }
 
 prefpane .groupbox-body {

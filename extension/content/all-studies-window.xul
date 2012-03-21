@@ -97,7 +97,7 @@
         <vbox style="padding: 12px;">
           <groupbox>
             <caption label="&testpilot.settings.dataSubmission.label;" />
-            <checkbox label="&testpilot.settings.alwaysSubmitData.shortLabel;"
+            <checkbox label="&testpilot.settings.alwaysSubmitData.label;"
                       preference="always-submit-data"/>
           </groupbox>
           <groupbox>

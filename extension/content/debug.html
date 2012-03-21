@@ -106,24 +106,12 @@
   }
 
   function makeThereBeAPopup() {
-    Components.utils.import("resource://testpilot/modules/interface.js");
-    var notifier = TestPilotUIBuilder.getNotificationManager();
-    var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].
-               getService(Components.interfaces.nsIWindowMediator);
-    var window = wm.getMostRecentWindow("navigator:browser");
-    try {
-    notifier.showNotification(window, { title: "This is title",
-                                        text: "This is text",
-                                        iconClass: "study-submitted",
-                                        closeCallback: function() {dump("You closed the notfn\n");},
-                                        fragile: true},
-                                        [{label: "This is a link",
-                                          customUiType: "link",
-                                          accessKey: "L",
-                                          callback: function() {dump("You picked More Info\n");}}]);
-    } catch(e) {
-      document.getElementById("debug").innerHTML = "Error: " + e;
-    }
+    Components.utils.import("resource://testpilot/modules/setup.js");
+    var task = TestPilotSetup.getTaskById(getEid());
+    var text = "Sample popup for " + task.title;
+    TestPilotSetup._showNotification(task, false, text, "This is Title",
+                                     "", true, false, "Linktext",
+                                     "http://evilbrainjono.net");
   }
 
   function wipeDb() {
@@ -182,6 +170,7 @@
     if (prefService.prefHasUserValue(prefName)) {
       prefService.clearUserPref(prefName);
     }
+    //TestPilotSetup.reloadRemoteExperiments();
   }
 
   function setSelectedTaskStatus() {
