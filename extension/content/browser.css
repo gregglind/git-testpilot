@@ -31,8 +31,15 @@
   margin-top: -6px;
   margin-right: -3px;
   width: 480px;
+  /* FIXES: #725850  based on #717262
+  /* Needed whilst we support Gecko < 13 */
   -moz-border-image: url(chrome://testpilot-os/skin/notification-tail-up.png) 26 56 22 18 / 26px 56px 22px 18px round stretch;
+  /* Supported in Gecko >= 13 */
+  -moz-border-image: url(chrome://testpilot-os/skin/notification-tail-up.png) 26 50 22 18 fill stretch;
+  border-width: 26px 56px 22px 18px;
+  border-style: solid;
 }
+
 
 .pilot-notification-popup-container {
   -moz-appearance: none;
