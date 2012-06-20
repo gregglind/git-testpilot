@@ -417,7 +417,7 @@ exports.RemoteExperimentLoader.prototype = {
       let foStream = Cc["@mozilla.org/network/file-output-stream;1"].
                                createInstance(Ci.nsIFileOutputStream);
 
-      foStream.init(file, 0x02 | 0x08 | 0x20, 0666, 0);
+      foStream.init(file, 0x02 | 0x08 | 0x20, parseInt("0666", 8), 0);
       // write, create, truncate
       let converter = Cc["@mozilla.org/intl/converter-output-stream;1"].
                                 createInstance(Ci.nsIConverterOutputStream);
