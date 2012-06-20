@@ -1,8 +1,24 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html> <head>
 <title>Test Pilot Debug Page</title>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
 <script src="experiment-page.js" type="application/javascript;version=1.8"></script>
 <script type="application/javascript;version=1.8">
+
+  var numstartupattempts=0;
+  function startup() {
+      numstartupattempts += 1;
+      dump('numattempts: ' + numstartupattempts + "\n");
+      var dropsuccess = populateFileDropdown();
+      if (! dropsuccess) {
+          $('h1#status').fadeIn('slow','linear');
+          window.setTimeout(function() {startup()}, 2000); // try again!
+      } else {
+          showSelectedTaskStatus()
+          showIndexFileDropdown();
+          $('h1#status').fadeOut("slow", "linear");
+      };
+  };
 
   function getEid() {
     var selector = document.getElementById("task-selector");
@@ -26,7 +42,7 @@
       if (errors.length > 0) {
         str = "<ul>";
         for each (let errStr in errors) {
-          str += "<li>" + errStr + "</li>";          
+          str += "<li>" + errStr + "</li>";
         }
         str += "</ul>";
       } else {
@@ -58,7 +74,7 @@
          [jarStore, loader.fs])});
     dump("Debug page Requiring toolbar study.\n");
     var toolbarStudy = clientLoader.require("toolbar-study");
-    
+
   }
 
   function remindMe() {
@@ -70,6 +86,7 @@
   function getCodeStorage() {
     Components.utils.import("resource://testpilot/modules/setup.js");
     var loader = TestPilotSetup._remoteExperimentLoader;
+    if (! loader) {return undefined;}
     return loader._jarStore;
   }
 
@@ -132,6 +149,8 @@
 
   function populateFileDropdown() {
     var codeStore = getCodeStorage();
+    if (! codeStore ) { return false }
+
     var files = codeStore.listAllFiles();
     var selector = document.getElementById("file-selector");
     var opt, i;
@@ -151,6 +170,7 @@
       opt.setAttribute("value", tasks[i].id);
       selector.appendChild(opt);
     }
+    return true;
   }
 
   function showSelectedTaskStatus() {
@@ -212,6 +232,9 @@
     }
   }
 
+
+   $(function(){startup()});
+
 </script>
 
 <style type="text/css">
@@ -220,7 +243,8 @@
 
 </head>
 
-<body onload="populateFileDropdown();showSelectedTaskStatus();showIndexFileDropdown();">
+<body>
+<h1 id='status'><blink>loading experiments</blink></h1> <!-- take that, web standards! -->
 
 <fieldset>
 <p><select id="task-selector" onchange="showSelectedTaskStatus();"></select> Current Status = <span id="show-status-span"></span>.
@@ -248,7 +272,7 @@ or set it to
 <button onclick="reloadAllExperiments();">Reload All Experiments</button>
 <button onclick="remindMe();">Notify Me</button>
 <button onclick="testJarStore();">Test Jar Store</button>
-Index file: 
+Index file:
 <select id="index-file-selector" onchange="setSelectedIndexFile();">
   <option value="index.json">index.json</option>
   <option value="index-dev.json">index-dev.json</option>
