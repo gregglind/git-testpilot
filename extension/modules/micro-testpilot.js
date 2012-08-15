@@ -1,12 +1,8 @@
 
 // Tiny embeddable version of Test Pilot.
-/* To use in client code:
- * myTestPilot = MicroTestPilot("search_tabs_study_1", 7);
- *   7 is duration, in days.
- * myTestPilot.record( { searchEngine: "google", method: "searchbar"} );
- * myTestPilot.record( { searchEngine: "bing", method: "tabswitch"} );
- * or whatever. Timestamps and metadata are automatically recorded. Submission happens
- * automatically. */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 EXPORTED_SYMBOLS = ["MicroTestPilot"];
 
