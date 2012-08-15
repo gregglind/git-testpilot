@@ -689,14 +689,18 @@ let TestPilotSetup = {
 
       // Random deployment (used to give study to random subsample of users)
       if (randomDeployment) {
-        /* Roll a hundred-sided die. Remember what we roll for later reference.  A study
+        /* Roll a 100*uniform_random. Remember what we roll for later reference or reuse.  A study
          * using random subsample deployment will provide a range (say, 0 ~ 30) which means
-         * only users who roll within that range will run the study. */
+         * only users who roll not outside that range (inclusive) will run the study.
+         * ie., [0,1.5] -> 1.5% prob
+         */
         let prefName = RANDOM_DEPLOY_PREFIX + "." + randomDeployment.rolloutCode;
         let myRoll = this._prefs.getValue(prefName, null);
         if (myRoll == null) {
-          myRoll = Math.floor(Math.random()*100);
-          this._prefs.setValue(prefName, myRoll);
+          myRoll = Math.random()*100;
+          this._prefs.setValue(prefName, JSON.stringify(myRoll));
+        } else {
+          myRoll = Number(myRoll);  // cast it
         }
         if (myRoll < randomDeployment.minRoll) {
           callback(false);
