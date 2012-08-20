@@ -192,7 +192,7 @@ body {
 	border-left: 1px solid #adb6ba;
 	border-right: 1px solid #adb6ba;
 	border-bottom: 3px solid #adb6ba;
-	border-bottom-colors:#adb6ba #e7eaec #e7eaec;
+	-moz-border-bottom-colors:#adb6ba #e7eaec #e7eaec;
 	background-color: #fff;
 }
 
