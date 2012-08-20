@@ -13,7 +13,7 @@
   <binding id="testpilot-notification"
            extends="chrome://global/content/bindings/notification.xml#popup-notification">
 
-    <!-- Remember to keep this up to date with the changes to base binding 
+    <!-- Remember to keep this up to date with the changes to base binding
          at http://hg.mozilla.org/mozilla-central/file/tip/toolkit/content/widgets/notification.xml-->
     <content align="start">
       <xul:image class="popup-notification-icon" anonid="notification-icon"
