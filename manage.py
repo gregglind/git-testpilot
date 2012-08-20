@@ -217,6 +217,16 @@ def start_jsbridge(options):
                  runner = runner)
 
 @task
+def build(options):
+    """update / download js for build"""
+    # extension/content/debug.html
+    import urllib
+    with open("extension/content/jquery.min.js","w") as fh:
+        fh.write(urllib.urlopen("http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js").read())
+
+    #curl -sS -L http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js -o $(TOP)/data/js/jquery.min.js
+
+@task
 @cmdopts(JSBRIDGE_OPTIONS)
 def run(options):
     """Run Firefox in a temporary new profile with the extension installed."""
