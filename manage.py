@@ -170,7 +170,7 @@ def uninstall(options):
                                                              options.profile)
 
 @task
-def xpi(options):
+def livexpi(options):
     """Build a distributable xpi installer for the extension."""
 
     resolve_options(options)
@@ -184,6 +184,22 @@ def xpi(options):
             arcpath = abspath[len(options.path_to_ext_root)+1:]
             zf.write(abspath, arcpath)
     print "Created %s." % zfname
+
+@task
+def xpi(options):
+    """xpi using the hg tip !"""
+    print "(use 'livexpi' if you want to build from the live tree')"
+    resolve_options(options)
+
+    name = options.ext_name.lower().replace(" ", "")
+    zfname = "%s-%s.xpi" % (name, options.ext_version)
+    zf = zipfile.ZipFile(zfname, "w", zipfile.ZIP_DEFLATED)
+    for filename in sh("hg st -n -c %s" % (options.path_to_ext_root,),capture=True).splitlines():
+        abspath = os.path.abspath(filename)
+        arcpath = abspath[len(options.path_to_ext_root)+1:]
+        zf.write(abspath, arcpath)
+    print "Created %s." % zfname
+
 
 def start_jsbridge(options):
     import mozrunner
