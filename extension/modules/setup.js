@@ -525,11 +525,12 @@ let TestPilotSetup = {
 	      task, false,
 	      this._stringBundle.formatStringFromName(
 		"testpilot.notification.newTestPilotSurvey.message",
-		[task.title], 1),
+    // in task.js summary falls back to title if undefined or empty, but we double make sure :)
+		[task.summary || task.title],1),
               this._stringBundle.GetStringFromName(
 		"testpilot.notification.newTestPilotSurvey"),
 	      "new-study", false, false,
-	      this._stringBundle.GetStringFromName("testpilot.moreInfo"),
+	      this._stringBundle.GetStringFromName("testpilot.takeSurvey"),
 	      task.defaultUrl);
             task.changeStatus(TaskConstants.STATUS_IN_PROGRESS, true);
             return;
