@@ -286,7 +286,7 @@ let TestPilotSetup = {
       appcontent.addEventListener("DOMContentLoaded", function(event) {
         let newUrl =  event.originalTarget.URL;
         self._feedbackManager.fillInFeedbackPage(newUrl, window);
-        for (i = 0; i < self.taskList.length; i++) {
+        for (let i = 0; i < self.taskList.length; i++) {
           self.taskList[i].onUrlLoad(newUrl, event);
         }
       }, true);
@@ -474,7 +474,7 @@ let TestPilotSetup = {
 
     // Highest priority is if there is a finished test (needs a decision)
     if (this._prefs.getValue(POPUP_SHOW_ON_FINISH, false)) {
-      for (i = 0; i < this.taskList.length; i++) {
+      for (let i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
         if (task.status == TaskConstants.STATUS_FINISHED) {
           if (!this._prefs.getValue(ALWAYS_SUBMIT_DATA, false)) {
@@ -499,7 +499,7 @@ let TestPilotSetup = {
     // If there's no finished test, next highest priority is new tests that
     // are starting...
     if (this._prefs.getValue(POPUP_SHOW_ON_NEW, false)) {
-      for (i = 0; i < this.taskList.length; i++) {
+      for (let i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
         if (task.status == TaskConstants.STATUS_PENDING ||
             task.status == TaskConstants.STATUS_NEW) {
@@ -541,7 +541,7 @@ let TestPilotSetup = {
 
     // And finally, new experiment results:
     if (this._prefs.getValue(POPUP_SHOW_ON_RESULTS, false)) {
-      for (i = 0; i < this.taskList.length; i++) {
+      for (let i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
         if (task.taskType == TaskConstants.TYPE_RESULTS &&
             task.status == TaskConstants.STATUS_NEW) {
