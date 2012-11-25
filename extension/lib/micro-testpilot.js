@@ -6,9 +6,7 @@
 
 EXPORTED_SYMBOLS = ["MicroTestPilot"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+const {Cc,Ci,Cu} = require("chrome");
 
 let AddonManagerMod = {};
 Cu.import("resource://gre/modules/AddonManager.jsm",AddonManagerMod);
@@ -189,3 +187,5 @@ function MicroTestPilot(studyName, duration) {
            };
 }
 
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

@@ -6,13 +6,12 @@ EXPORTED_SYMBOLS = ["TaskConstants", "TestPilotBuiltinSurvey",
                     "TestPilotExperiment", "TestPilotStudyResults",
                     "TestPilotLegacyStudy", "TestPilotWebSurvey"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
+const {Cc,Ci} = require("chrome");
 
-Components.utils.import("resource://testpilot/modules/Observers.js");
-Components.utils.import("resource://testpilot/modules/metadata.js");
-Components.utils.import("resource://testpilot/modules/log4moz.js");
-Components.utils.import("resource://testpilot/modules/string_sanitizer.js");
+let {Observers} = require("Observers.js");
+let {MetadataCollector} = require("metadata.js");
+let {Log4Moz} = require("log4moz.js");
+let {sanitizeString, sanitizeJSONStrings} = require("string_sanitizer.js");
 
 const STATUS_PREF_PREFIX = "extensions.testpilot.taskstatus.";
 const START_DATE_PREF_PREFIX = "extensions.testpilot.startDate.";
@@ -370,8 +369,8 @@ TestPilotExperiment.prototype = {
 	  } else {
 	    // for after deleting data manually by user.
             let stringBundle =
-              Components.classes["@mozilla.org/intl/stringbundle;1"].
-                getService(Components.interfaces.nsIStringBundleService).
+              Cc["@mozilla.org/intl/stringbundle;1"].
+                getService(Ci.nsIStringBundleService).
 	          createBundle("chrome://testpilot/locale/main.properties");
 	    let link =
 	      '<a href="' + self.infoPageUrl + '">' + self.title + '</a>';
@@ -1184,3 +1183,5 @@ TestPilotLegacyStudy.prototype = {
   // user didn't actually complete them...
 };
 TestPilotLegacyStudy.prototype.__proto__ = TestPilotTask;
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

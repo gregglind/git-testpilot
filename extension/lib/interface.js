@@ -13,9 +13,7 @@
 
 EXPORTED_SYMBOLS = ["TestPilotUIBuilder"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+const {Cc,Ci,Cu} = require("chrome");
 const UPDATE_CHANNEL_PREF = "app.update.channel";
 const POPUP_SHOW_ON_NEW = "extensions.testpilot.popup.showOnNewStudy";
 const POPUP_CHECK_INTERVAL = "extensions.testpilot.popup.delayAfterStartup";
@@ -131,3 +129,5 @@ var TestPilotUIBuilder = {
     }
   }
 };
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

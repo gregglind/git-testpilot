@@ -6,9 +6,7 @@ EXPORTED_SYMBOLS = ["TestPilotSetup", "POPUP_SHOW_ON_NEW",
                     "POPUP_SHOW_ON_FINISH", "POPUP_SHOW_ON_RESULTS",
                     "ALWAYS_SUBMIT_DATA", "RUN_AT_ALL_PREF"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+const {Cc,Ci,Cu} = require("chrome");
 
 const EXTENSION_ID = "testpilot@labs.mozilla.com";
 const VERSION_PREF ="extensions.testpilot.lastversion";
@@ -24,9 +22,7 @@ const UPDATE_CHANNEL_PREF = "app.update.channel";
 const LOG_FILE_NAME = "TestPilotErrorLog.log";
 const RANDOM_DEPLOY_PREFIX = "extensions.testpilot.deploymentRandomizer";
 
-let interfaceObj = {}
-Cu.import("resource://testpilot/modules/interface.js",interfaceObj);
-let {TestPilotUIBuilder} = interfaceObj;
+let {TestPilotUIBuilder} = require('interface');
 
 let TestPilotSetup = {
   didReminderAfterStartup: false,
@@ -54,9 +50,7 @@ let TestPilotSetup = {
   __loader: null,
   get _loader() {
     if (this.__loader == null) {
-      let Cuddlefish = {};
-      Components.utils.import("resource://testpilot/modules/lib/cuddlefish.js",
-                        Cuddlefish);
+      let Cuddlefish = require("oldsdk/cuddlefish.js");
       let repo = this._logRepo;
       this.__loader = new Cuddlefish.Loader(
           {rootPaths: ["resource://testpilot/modules/",
@@ -70,8 +64,7 @@ let TestPilotSetup = {
   __feedbackManager: null,
   get _feedbackManager() {
     if (this.__feedbackManager == null) {
-      let FeedbackModule = {};
-      Cu.import("resource://testpilot/modules/feedback.js", FeedbackModule);
+      let FeedbackModule = require("feedback");
       this.__feedbackManager = FeedbackModule.FeedbackManager;
     }
     return this.__feedbackManager;
@@ -80,9 +73,7 @@ let TestPilotSetup = {
   __dataStoreModule: null,
   get _dataStoreModule() {
     if (this.__dataStoreModule == null) {
-      this.__dataStoreModule = {};
-      Cu.import("resource://testpilot/modules/experiment_data_store.js",
-                  this._dataStoreModule);
+      this.__dataStoreModule = require("experiment_data_store");
     }
     return this.__dataStoreModule;
   },
@@ -104,18 +95,18 @@ let TestPilotSetup = {
     // Note: This hits the disk so it's an expensive operation; don't call it
     // on startup.
     if (this.__logRepo == null) {
-      let Log4MozModule = {};
-      Cu.import("resource://testpilot/modules/log4moz.js", Log4MozModule);
+      let {Log4Moz} = require("log4moz");
       let props = Cc["@mozilla.org/file/directory_service;1"].
                     getService(Ci.nsIProperties);
-      let logFile = props.get("ProfD", Components.interfaces.nsIFile);
+      let logFile = props.get("ProfD", Ci.nsIFile);
       logFile.append(LOG_FILE_NAME);
-      let formatter = new Log4MozModule.Log4Moz.BasicFormatter;
-      let root = Log4MozModule.Log4Moz.repository.rootLogger;
-      root.level = Log4MozModule.Log4Moz.Level["All"];
-      let appender = new Log4MozModule.Log4Moz.RotatingFileAppender(logFile, formatter);
+      let formatter = new Log4Moz.BasicFormatter;
+      let root = Log4Moz.repository.rootLogger;
+      root.level = Log4Moz.Level["All"];
+      let appender = new Log4Moz.RotatingFileAppender(logFile, formatter);
       root.addAppender(appender);
-      this.__logRepo = Log4MozModule.Log4Moz.repository;
+      this.__logRepo = Log4Moz.repository;
+
     }
     return this.__logRepo;
   },
@@ -131,8 +122,7 @@ let TestPilotSetup = {
   __taskModule: null,
   get _taskModule() {
     if (this.__taskModule == null) {
-      this.__taskModule = {};
-      Cu.import("resource://testpilot/modules/tasks.js", this.__taskModule);
+      this.__taskModule = require("tasks");
     }
     return this.__taskModule;
   },
@@ -839,3 +829,5 @@ let TestPilotSetup = {
     return this.taskList;
   }
 };
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

@@ -4,13 +4,9 @@
 
 EXPORTED_SYMBOLS = ["MetadataCollector"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+const {Cc,Ci,Cm,Cu} = require("chrome");
 
-let ssObj = {};
-Cu.import("resource://testpilot/modules/string_sanitizer.js",ssObj);
-let {sanitizeString, sanitizeJSONStrings} = ssObj;
+let {sanitizeString, sanitizeJSONStrings} = require('string_sanitizer');
 
 const LOCALE_PREF = "general.useragent.locale";
 const EXTENSION_ID = "testpilot@labs.mozilla.com";
@@ -90,7 +86,7 @@ let MetadataCollector = {
      * (David Bolter's code from bug 577694) */
     let enabled;
     try {
-      enabled = Components.manager.QueryInterface(Ci.nsIServiceManager)
+      enabled = Cm.QueryInterface(Ci.nsIServiceManager)
                   .isServiceInstantiatedByContractID(
                     "@mozilla.org/accessibilityService;1",
                     Ci.nsISupports);
@@ -160,3 +156,5 @@ let MetadataCollector = {
   }
   // TODO if we make a GUID for the user, we keep it here.
 };
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

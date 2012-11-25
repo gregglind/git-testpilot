@@ -10,9 +10,7 @@
 
 EXPORTED_SYMBOLS = ["CustomNotificationManager", "PopupNotificationManager"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+const {Cu} = require("chrome");
 
 /* CustomNotificationManager: the one where notifications
  * come up from the Test Pilot icon in the addon bar.  For Firefox 3.6. */
@@ -144,7 +142,7 @@ function PopupNotificationManager() {
   /* In the future, we may want to anchor these to the Feedback button if present,
    * but for now that option is unimplemented. */
   this._popupModule = {};
-  Components.utils.import("resource://gre/modules/PopupNotifications.jsm", this._popupModule);
+  Cu.import("resource://gre/modules/PopupNotifications.jsm", this._popupModule);
   this._pn = null;
 }
 PopupNotificationManager.prototype = {
@@ -214,3 +212,6 @@ PopupNotificationManager.prototype = {
     }
   }
 };
+
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

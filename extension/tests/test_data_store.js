@@ -424,11 +424,9 @@ function clearAllPrefsForStudy(studyId) {
 }
 
 function testRecurringStudyStateChange() {
-  let tasksObj = {};
-  Cu.import("resource://testpilot/modules/tasks.js",tasksObj);
-  let {"TaskConstants", "TestPilotBuiltinSurvey",
-                    "TestPilotExperiment", "TestPilotStudyResults",
-                    "TestPilotLegacyStudy", "TestPilotWebSurvey"} = tasksObj;
+  let {TaskConstants, TestPilotBuiltinSurvey,
+                    TestPilotExperiment, TestPilotStudyResults,
+                    TestPilotLegacyStudy, TestPilotWebSurvey} = require("tasks");
   let expInfo = {
     startDate: null,
     duration: 7,
@@ -716,9 +714,9 @@ function testSameGUIDs() {
   // submission GUID.
   let tasks = {};
   Cu.import("resource://testpilot/modules/tasks.js",tasks);
-  let {"TaskConstants", "TestPilotBuiltinSurvey",
-                    "TestPilotExperiment", "TestPilotStudyResults",
-                    "TestPilotLegacyStudy", "TestPilotWebSurvey"} = tasks;
+  let {TaskConstants, TestPilotBuiltinSurvey,
+                    TestPilotExperiment, TestPilotStudyResults,
+                    TestPilotLegacyStudy, TestPilotWebSurvey} = require("tasks");
   let expInfo = {
     startDate: null,
     duration: 7,
@@ -793,3 +791,5 @@ function testSameGUIDs() {
 
 // TODO test for continuity of GUID with recurring study (longitudinal) - i don't think this
 // has actually been working so far because a new GUID is generted every time the study starts up...
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

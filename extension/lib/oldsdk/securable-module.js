@@ -3,10 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 (function(global) {
-   const Cc = Components.classes;
-   const Ci = Components.interfaces;
-   const Cu = Components.utils;
-   const Cr = Components.results;
+   const {Cc,Ci,Cr,Cs,Cu,components} = require("chrome");
 
    var exports = {};
 
@@ -47,7 +44,7 @@
      // We're being loaded from a chrome-privileged JS module or
      // SecurableModule, so use its filename (which may itself
      // contain a reference to a parent).
-     parentChromeURIString = Components.stack.filename;
+     parentChromeURIString = Cs.filename;
 
    function maybeParentifyFilename(filename) {
      var doParentifyFilename = true;

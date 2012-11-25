@@ -5,21 +5,11 @@
 EXPORTED_SYMBOLS = ["ExperimentDataStore", "TYPE_INT_32", "TYPE_DOUBLE",
                    "TYPE_STRING"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+const {Cc,Ci,Cu} = require("chrome");
 
-let dbutilsObj = {};
-Cu.import("resource://testpilot/modules/dbutils.js",dbutilsObj);
-let {DbUtils} = dbutilsObj;
-
-let log4mozObj = {};
-Cu.import("resource://testpilot/modules/log4moz.js",log4mozObj);
-let {Log4Moz} = log4mozObj;
-
-let ssObj = {};
-Cu.import("resource://testpilot/modules/string_sanitizer.js",ss);
-let {sanitizeString, sanitizeJSONStrings} = ss;
+let {DbUtils} = require("dbutils");
+let {Log4Moz} = require("log4moz");
+let {sanitizeString, sanitizeJSONStrings} = require("string_sanitizer");
 
 var _dirSvc = Cc["@mozilla.org/file/directory_service;1"]
                 .getService(Ci.nsIProperties);
@@ -356,3 +346,6 @@ ExperimentDataStore.prototype = {
     return [ this._columns[i].property for (i in this._columns) ];
   }
 };
+
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

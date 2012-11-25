@@ -21,3 +21,6 @@ function sanitizeJSONStrings(jsonBlob) {
   }
   return jsonBlob;
 }
+
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

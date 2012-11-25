@@ -4,10 +4,7 @@
 
 let EXPORTED_SYMBOLS = ["Observers"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
-const Cu = Components.utils;
+const {Cc,Ci,Cr,Cu} = require("chrome");
 
 let utilsObj = {};
 Cu.import("resource://gre/modules/XPCOMUtils.jsm",utilsObj);
@@ -150,3 +147,6 @@ Subject.prototype = {
   getHelperForLanguage: function() {},
   getInterfaces: function() {}
 };
+
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

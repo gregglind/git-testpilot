@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+const {Cu, Cs} = require("chrome");
+
 var compactTimerId;
 var COMPACT_INTERVAL = 5000;
 var trackedObjects = {};
@@ -33,7 +35,7 @@ function compact() {
 var track = exports.track = function track(object, bin, stackFrameNumber) {
   if (!compactTimerId)
     scheduleNextCompaction();
-  var frame = Components.stack.caller;
+  var frame = Cs.caller;
   var weakref = Cu.getWeakReference(object);
   if (!bin)
     bin = object.constructor.name;

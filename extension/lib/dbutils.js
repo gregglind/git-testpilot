@@ -2,14 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var Ci = Components.interfaces;
-var Cc = Components.classes;
-var Cu = Components.utils;
+const {Cc, Ci, Cu} = require("chrome");
+
 var EXPORTED_SYMBOLS = ["DbUtils"];
 
-let log4mozObj = {};
-Cu.import("resource://testpilot/modules/log4moz.js",log4mozObj);
-let {Log4Moz} = log4mozObj;
+let {Log4Moz} = require("log4moz");
 
 /* Make a namespace object called DbUtils, to export,
  * which contains each function in this file.*/
@@ -32,7 +29,7 @@ DbUtils.openDatabase = function openDatabase(file) {
     logger.debug("Opening file done...\n");
   } catch(e) {
     logger.debug("Opening file failed...\n");
-    Components.utils.reportError(
+    Cu.reportError(
       "Opening database failed, database may not have been initialized");
   }
   return connection;
@@ -63,3 +60,6 @@ DbUtils.createTable = function createTable(connection, tableName, schema){
   }
   return connection;
 };
+
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

@@ -4,10 +4,7 @@
 
 const EXPORTED_SYMBOLS = ['Log4Moz'];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
-const Cu = Components.utils;
+const {Cc,Ci,Cr,Cu} = require("chrome");
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -529,3 +526,6 @@ RotatingFileAppender.prototype = {
     // Note: this._file still points to the same file
   }
 };
+
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

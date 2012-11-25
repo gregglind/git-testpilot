@@ -5,9 +5,9 @@
 const BASE_URL_PREF = "extensions.testpilot.indexBaseURL";
 const SSL_DOWNLOAD_REQUIRED_PREF = "extensions.testpilot.ssldownloadrequired";
 
-var Cuddlefish = require("cuddlefish");
+var Cuddlefish = require("oldsdk/cuddlefish");
 var resolveUrl = require("url").resolve;
-var SecurableModule = require("securable-module");
+var SecurableModule = require("oldsdk/securable-module");
 let JarStore = require("jar-code-store").JarStore;
 let prefs = require("preferences-service");
 
@@ -523,3 +523,4 @@ exports.RemoteExperimentLoader.prototype = {
 
 // TODO but once the study is expired, should delete the jar for it and
 // just load the LegacyStudy version.
+

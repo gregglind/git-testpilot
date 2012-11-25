@@ -4,8 +4,7 @@
 
 EXPORTED_SYMBOLS = ["FeedbackManager"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
+const {Cc,Ci} = require("chrome");
 
 let Application = Cc["@mozilla.org/fuel/application;1"]
                   .getService(Ci.fuelIApplication);
@@ -115,3 +114,6 @@ var FeedbackManager = {
     }
   }
 };
+
+
+EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});

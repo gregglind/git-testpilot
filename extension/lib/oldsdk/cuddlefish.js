@@ -15,7 +15,7 @@
 
    if (global.require)
      // We're being loaded in a SecurableModule.
-     securableModule = require("securable-module");
+     securableModule = require("./securable-module");
    else {
      var myURI = Components.stack.filename.split(" -> ").slice(-1)[0];
      var ios = Cc['@mozilla.org/network/io-service;1']
@@ -86,11 +86,11 @@
      modules[path] = new CuddlefishModule(loader);
 
      if (!globals.console) {
-       var console = loader.require("plain-text-console");
+       var console = loader.require("./plain-text-console");
        globals.console = new console.PlainTextConsole(options.print);
      }
      if (!globals.memory)
-       globals.memory = loader.require("memory");
+       globals.memory = loader.require("./memory");
 
      loader.console = globals.console;
      loader.memory = globals.memory;
