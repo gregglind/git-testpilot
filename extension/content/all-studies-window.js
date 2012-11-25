@@ -269,7 +269,7 @@ var TestPilotXulWindow = {
         this.addButton(statusVbox,
           this._stringBundle.getString("testpilot.submit"),
           "submit-button-" + task.id,
-          "TestPilotXulWindow.onSubmitButton(" + task.id + ");");
+          "TestPilotXulWindow.onSubmitButton('" + task.id + "');");
       }
       if (task.status == TaskConstants.STATUS_CANCELLED) {
         let hbox = document.createElement("hbox");
