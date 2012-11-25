@@ -39,7 +39,7 @@ TestPilotComponent.prototype = {
         {notify: function(timer) {
            Cu.import("resource://testpilot/modules/setup.js");
            TestPilotSetup.globalStartup();
-         }}, 10000, Ci.nsITimer.TYPE_ONE_SHOT);
+         }}, 100, Ci.nsITimer.TYPE_ONE_SHOT);  // 100 ms delay
       break;
     }
   }
