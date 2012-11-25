@@ -87,16 +87,17 @@ let TestPilotSetup = {
     return this.__dataStoreModule;
   },
 
+  /** removed per hg 31d411b1c202
+    * "Removed extension update notifications."
   __extensionUpdater: null,
   get _extensionUpdater() {
     if (this.__extensionUpdater == null) {
-      let ExUpdate = {};
-      Cu.import("resource://testpilot/modules/extension-update.js",
-                   ExUpdate);
+      let ExUpdate = //;
       this.__extensionUpdater = ExUpdate.TestPilotExtensionUpdate;
     }
     return this.__extensionUpdater;
   },
+  */
 
   __logRepo: null,
   get _logRepo() {
