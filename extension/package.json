@@ -1,0 +1,11 @@
+{
+  "name": "Test Pilot",
+  "fullName": "Test Pilot",
+  "description": "Help make Firefox better by running user studies.",
+  "author": "Mozilla Corporation",
+  "id": "testpilot@labs.mozilla.com",
+  "license": "MPL 2.0",
+  "version": "1.3",
+  "iconURL": "chrome://testpilot/skin/testpilot_32x32.png",
+  "homepage": "http://testpilot.mozillalabs.com"
+}
