@@ -4,7 +4,9 @@
 
 const Cu = Components.utils;
 
+let setupObj = {};
 Cu.import("resource://testpilot/modules/setup.js");
+let {TestPilotSetup} = setupObj;
 
 function showdbcontents() {
   // experimentId is passed in through window.openDialog.  Access it like so:

@@ -6,7 +6,9 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+let comutils = {};
+Cu.import("resource://gre/modules/XPCOMUtils.jsm",comutils);
+let {XPCOMUtils} = comutils;
 
 function TestPilotComponent() {}
 TestPilotComponent.prototype = {
@@ -37,8 +39,9 @@ TestPilotComponent.prototype = {
       this._startupTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
       this._startupTimer.initWithCallback(
         {notify: function(timer) {
-           Cu.import("resource://testpilot/modules/setup.js");
-           TestPilotSetup.globalStartup();
+           let setupObj = {};
+           Cu.import("resource://testpilot/modules/setup.js",setupObj);
+           setupObj.TestPilotSetup.globalStartup();
          }}, 100, Ci.nsITimer.TYPE_ONE_SHOT);  // 100 ms delay
       break;
     }

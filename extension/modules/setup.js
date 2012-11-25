@@ -24,7 +24,9 @@ const UPDATE_CHANNEL_PREF = "app.update.channel";
 const LOG_FILE_NAME = "TestPilotErrorLog.log";
 const RANDOM_DEPLOY_PREFIX = "extensions.testpilot.deploymentRandomizer";
 
-Cu.import("resource://testpilot/modules/interface.js");
+let interfaceObj = {}
+Cu.import("resource://testpilot/modules/interface.js",interfaceObj);
+let {TestPilotUIBuilder} = interfaceObj;
 
 let TestPilotSetup = {
   didReminderAfterStartup: false,

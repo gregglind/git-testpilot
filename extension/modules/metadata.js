@@ -8,7 +8,9 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-Cu.import("resource://testpilot/modules/string_sanitizer.js");
+let ssObj = {};
+Cu.import("resource://testpilot/modules/string_sanitizer.js",ssObj);
+let {sanitizeString, sanitizeJSONStrings} = ssObj;
 
 const LOCALE_PREF = "general.useragent.locale";
 const EXTENSION_ID = "testpilot@labs.mozilla.com";

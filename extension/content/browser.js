@@ -9,7 +9,11 @@ var TestPilotMenuUtils;
   var Cu = Components.utils;
   var Ci = Components.interfaces;
 
-  Cu.import("resource://testpilot/modules/setup.js");
+  let setupObj = {};
+  Cu.import("resource://testpilot/modules/setup.js",setupObj);
+  let {TestPilotSetup, POPUP_SHOW_ON_NEW,
+      POPUP_SHOW_ON_FINISH, POPUP_SHOW_ON_RESULTS,
+      ALWAYS_SUBMIT_DATA, RUN_AT_ALL_PREF} = setupObj;
 
   TestPilotMenuUtils = {
     updateSubmenu: function() {
@@ -115,7 +119,9 @@ var TestPilotMenuUtils;
   var TestPilotWindowHandlers = {
     onWindowLoad: function() {
       // Customize the interface of the newly opened window.
-      Cu.import("resource://testpilot/modules/interface.js");
+      let interfaceMod = {};
+      Cu.import("resource://testpilot/modules/interface.js",interfaceMod);
+      let {TestPilotUIBuilder} = interfaceMod;
       TestPilotUIBuilder.buildCorrectInterface(window);
 
       /* "Hold" window load events for TestPilotSetup, passing them along only

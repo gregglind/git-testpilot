@@ -9,9 +9,18 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-Cu.import("resource://testpilot/modules/dbutils.js");
-Cu.import("resource://testpilot/modules/log4moz.js");
-Cu.import("resource://testpilot/modules/string_sanitizer.js");
+let dbutilsObj = {};
+Cu.import("resource://testpilot/modules/dbutils.js",dbutilsObj);
+let {DbUtils} = dbutilsObj;
+
+let log4mozObj = {};
+Cu.import("resource://testpilot/modules/log4moz.js",log4mozObj);
+let {Log4Moz} = log4mozObj;
+
+let ssObj = {};
+Cu.import("resource://testpilot/modules/string_sanitizer.js",ss);
+let {sanitizeString, sanitizeJSONStrings} = ss;
+
 var _dirSvc = Cc["@mozilla.org/file/directory_service;1"]
                 .getService(Ci.nsIProperties);
 var _storSvc = Cc["@mozilla.org/storage/service;1"]

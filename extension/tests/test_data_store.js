@@ -68,24 +68,28 @@ function cheapAssertFail(errorMsg) {
 }
 
 function testFirefoxVersionCheck() {
-  Cu.import("resource://testpilot/modules/setup.js");
+  let setupObj = {};
+  Cu.import("resource://testpilot/modules/setup.js",setupObj);
+  let {TestPilotSetup} = setupObj;
   cheapAssertEqual(true, TestPilotSetup._isNewerThanFirefox("4.0"));
   cheapAssertEqual(false, TestPilotSetup._isNewerThanFirefox("3.5"));
   cheapAssertEqual(false, TestPilotSetup._isNewerThanFirefox("3.6"));
 }
 
 function testStringSanitizer() {
-  Cu.import("resource://testpilot/modules/string_sanitizer.js");
+  let ssObj = {};
+  Cu.import("resource://testpilot/modules/string_sanitizer.js",ssObj);
   var evilString = "I *have* (evil) ^characters^ [hahaha];";
-  dump("Sanitized evil string is " + sanitizeString(evilString) + "\n");
-  cheapAssertEqual(sanitizeString(evilString),
+  dump("Sanitized evil string is " + ssObj.sanitizeString(evilString) + "\n");
+  cheapAssertEqual(ssObj.sanitizeString(evilString),
                    "I ?have? ?evil? ?characters? ?hahaha??");
 }
 
 function testTheDataStore() {
   // Geez, async unit tests are a pain.
-  Cu.import("resource://testpilot/modules/experiment_data_store.js");
-
+  let storeObj = {};
+  Cu.import("resource://testpilot/modules/experiment_data_store.js",storeObj);
+  let {TYPE_DOUBLE,TYPE_STRING,TYPE_INT_32,ExperimentDataStore} = storeObj;
   var columns =  [{property: "prop_a", type: TYPE_INT_32, displayName: "Length"},
                   {property: "prop_b", type: TYPE_INT_32, displayName: "Type",
                    displayValue: ["Spam", "Egg", "Sausage", "Baked Beans"]},
@@ -420,9 +424,11 @@ function clearAllPrefsForStudy(studyId) {
 }
 
 function testRecurringStudyStateChange() {
-
-  Cu.import("resource://testpilot/modules/tasks.js");
-
+  let tasksObj = {};
+  Cu.import("resource://testpilot/modules/tasks.js",tasksObj);
+  let {"TaskConstants", "TestPilotBuiltinSurvey",
+                    "TestPilotExperiment", "TestPilotStudyResults",
+                    "TestPilotLegacyStudy", "TestPilotWebSurvey"} = tasksObj;
   let expInfo = {
     startDate: null,
     duration: 7,
@@ -708,8 +714,11 @@ function testSameGUIDs() {
 
   // start and submit study first, start and submit survey second: ensure that both have same
   // submission GUID.
-  Cu.import("resource://testpilot/modules/tasks.js");
-
+  let tasks = {};
+  Cu.import("resource://testpilot/modules/tasks.js",tasks);
+  let {"TaskConstants", "TestPilotBuiltinSurvey",
+                    "TestPilotExperiment", "TestPilotStudyResults",
+                    "TestPilotLegacyStudy", "TestPilotWebSurvey"} = tasks;
   let expInfo = {
     startDate: null,
     duration: 7,

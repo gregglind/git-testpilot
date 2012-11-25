@@ -9,7 +9,9 @@ const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+let utilsObj = {};
+Cu.import("resource://gre/modules/XPCOMUtils.jsm",utilsObj);
+let {XPCOMUtils} = utilsObj;
 
 /**
  * A service for adding, removing and notifying observers of notifications.

@@ -10,7 +10,9 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/AddonManager.jsm");
+let AddonManagerMod = {};
+Cu.import("resource://gre/modules/AddonManager.jsm",AddonManagerMod);
+let {AddonManager} = AddonManagerMod;
 
 const STATUS_PREF_PREFIX = "extensions.testpilot.taskstatus.";
 const LOCALE_PREF = "general.useragent.locale";
