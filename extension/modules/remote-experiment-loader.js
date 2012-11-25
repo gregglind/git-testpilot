@@ -358,7 +358,7 @@ exports.RemoteExperimentLoader.prototype = {
           file.remove(false);
         }
         if (!file.exists()) {
-          file.create(Ci.nsIFile.DIRECTORY_TYPE, 0777);
+          file.create(Ci.nsIFile.DIRECTORY_TYPE, parseInt("0777", 8));
         }
         file.append("index.json");
         this._cachedIndexNsiFile = file;
@@ -380,7 +380,7 @@ exports.RemoteExperimentLoader.prototype = {
       if (file.exists()) {
         file.remove(false);
       }
-      file.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
+      file.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0666", 8));
       // file is nsIFile, data is a string
       let foStream = Cc["@mozilla.org/network/file-output-stream;1"].
                                createInstance(Ci.nsIFileOutputStream);
