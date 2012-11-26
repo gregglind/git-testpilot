@@ -1,11 +1,166 @@
 {
-  "name": "Test Pilot",
-  "fullName": "Test Pilot",
-  "description": "Help make Firefox better by running user studies.",
-  "author": "Mozilla Corporation",
+  "name": "testpilot",
   "id": "testpilot@labs.mozilla.com",
+
+  "author": "Mozilla Corporation",
+  "contributors": [
+     "Jono X <jono@mozilla.com>",
+	 "Atul Varma <atul@mozilla.com>",
+	 "Raymond Lee <raymond@appcoast.com>",
+	 "Myk Melez <myk@mozilla.org>",
+	 "Daniel Aquino <mr.danielaquino@gmail.com>",
+	 "Dan Mills <thunder@mozilla.com>",
+	 "Michael Johnston <special.michael@gmail.com>",
+	 "Irakli Gozalishvili <rfobic@gmail.com>.",
+	 "Jorge Villalobos <jorge@mozilla.com>",
+	 "Brandon Pung <brandonpung@gmail.com>",
+	 "Gregg Lind <glind@mozilla.com>",
+	 "Ilana Segall <isegall@mozilla.com>",
+	 "Blake Winton <bwinton@mozilla.com>",
+	 "Gavin Sharp <gsharp@mozilla.com>"
+  ],
+  "description": "Help make Firefox better by running user studies.",
+  "fullName": "Test Pilot",
+  "homepage": "http://testpilot.mozillalabs.com",
+  "icon": "data/skin/all/testpilot_32x32.png",
+  "lib": "lib",
   "license": "MPL 2.0",
-  "version": "1.3",
-  "iconURL": "chrome://testpilot/skin/testpilot_32x32.png",
-  "homepage": "http://testpilot.mozillalabs.com"
+  "main": "main",
+  "preferences": [
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "string",
+	    "value": "index.json",
+	    "name": "indexFileName"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "string",
+	    "value": "chrome://testpilot/locale/main.properties",
+	    "name": "extensions.testpilot@labs.mozilla.com.description"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "integer",
+	    "value": 180000,
+	    "name": "popup.delayAfterStartup"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "integer",
+	    "value": 86400000,
+	    "name": "popup.timeBetweenChecks"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "integer",
+	    "value": 3600000,
+	    "name": "uploadRetryInterval"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "bool",
+	    "value": false,
+	    "name": "popup.showOnNewStudy"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "bool",
+	    "value": true,
+	    "name": "popup.showOnStudyFinished"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "bool",
+	    "value": false,
+	    "name": "popup.showOnNewResults"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "bool",
+	    "value": false,
+	    "name": "alwaysSubmitData"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "bool",
+	    "value": true,
+	    "name": "runStudies"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "bool",
+	    "value": false,
+	    "name": "alreadyCustomizedToolbar"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "string",
+	    "value": "https://testpilot.mozillalabs.com/testcases/",
+	    "name": "indexBaseURL"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "string",
+	    "value": "chrome://testpilot/content/welcome.html",
+	    "name": "firstRunUrl"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "string",
+	    "value": "https://testpilot.mozillalabs.com/submit/",
+	    "name": "dataUploadURL"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "string",
+	    "value": "https://testpilot.mozillalabs.com/",
+	    "name": "homepageURL"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "string",
+	    "value": "http://input.mozilla.com/happy",
+	    "name": "extensions.input.happyURL"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "string",
+	    "value": "http://input.mozilla.com/sad",
+	    "name": "extensions.input.sadURL"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "string",
+	    "value": "http://input.mozilla.com/feedback#broken",
+	    "name": "extensions.input.brokenURL"
+	  },
+	  {
+	    "description": "Some short description for the preference",
+	    "title": "Some preference title",
+	    "type": "string",
+	    "value": "http://input.mozilla.com/feedback#idea",
+	    "name": "extensions.input.ideaURL"
+	  }
+  ],
+  "tests": "tests",
+  "version": "1.3"
 }
