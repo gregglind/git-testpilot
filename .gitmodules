@@ -1,0 +1,6 @@
+[submodule "packages/menuitems"]
+	path = packages/menuitems
+	url = https://github.com/erikvold/menuitems-jplib
+[submodule "packages/vold-utils"]
+	path = packages/vold-utils
+	url = https://github.com/erikvold/vold-utils-jplib
