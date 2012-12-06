@@ -29,7 +29,7 @@
   "preferences": [
 	  {
 	    "description": "Some short description for the preference",
-	    "title": "Some preference title",
+	    "title": "index file name",
 	    "type": "string",
 	    "value": "index.json",
 	    "name": "indexFileName"
@@ -43,56 +43,56 @@
 	  },
 	  {
 	    "description": "Some short description for the preference",
-	    "title": "Some preference title",
+	    "title": "delay after startup",
 	    "type": "integer",
 	    "value": 180000,
 	    "name": "popup.delayAfterStartup"
 	  },
 	  {
 	    "description": "Some short description for the preference",
-	    "title": "Some preference title",
+	    "title": "time between checks",
 	    "type": "integer",
 	    "value": 86400000,
 	    "name": "popup.timeBetweenChecks"
 	  },
 	  {
 	    "description": "Some short description for the preference",
-	    "title": "Some preference title",
+	    "title": "upload retry interval",
 	    "type": "integer",
 	    "value": 3600000,
 	    "name": "uploadRetryInterval"
 	  },
 	  {
 	    "description": "Some short description for the preference",
-	    "title": "Some preference title",
+	    "title": "popup.showOnNewStudy",
 	    "type": "bool",
-	    "value": false,
+	    "value": true,
 	    "name": "popup.showOnNewStudy"
 	  },
 	  {
 	    "description": "Some short description for the preference",
-	    "title": "Some preference title",
+	    "title": "popup.showOnStudyFinished",
 	    "type": "bool",
 	    "value": true,
 	    "name": "popup.showOnStudyFinished"
 	  },
 	  {
 	    "description": "Some short description for the preference",
-	    "title": "Some preference title",
+	    "title": "popup.showOnNewResults",
 	    "type": "bool",
-	    "value": false,
+	    "value": true,
 	    "name": "popup.showOnNewResults"
 	  },
 	  {
 	    "description": "Some short description for the preference",
-	    "title": "Some preference title",
+	    "title": "alwaysSubmitData",
 	    "type": "bool",
 	    "value": false,
 	    "name": "alwaysSubmitData"
 	  },
 	  {
-	    "description": "Some short description for the preference",
-	    "title": "Some preference title",
+	    "description": "Run the extension at all",
+	    "title": "run studies",
 	    "type": "bool",
 	    "value": true,
 	    "name": "runStudies"
@@ -106,7 +106,7 @@
 	  },
 	  {
 	    "description": "Some short description for the preference",
-	    "title": "Some preference title",
+	    "title": "experiments root url",
 	    "type": "string",
 	    "value": "https://testpilot.mozillalabs.com/testcases/",
 	    "name": "indexBaseURL"
@@ -159,7 +159,20 @@
 	    "type": "string",
 	    "value": "http://input.mozilla.com/feedback#idea",
 	    "name": "extensions.input.ideaURL"
-	  }
+	  },
+	  {
+	    "description": "TP Log to Error Console, not just profile",
+	    "title": "Log to Error Console",
+	    "type": "bool",
+	    "value": true,
+	    "name": "logtoconsole"
+	  },
+      {
+        "title": "experiment file storage",
+        "name": "jarfiledir",
+        "type": "string",
+        "value": "EXPERIMENTFILES"
+      }
   ],
   "tests": "tests",
   "version": "1.3"

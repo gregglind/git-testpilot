@@ -11,12 +11,21 @@
 
 // A lot of the stuff that's currently in browser.js can get moved here.
 
+/* Note on prefs:
+ * beacuse we want to use "Default Branch", we use the raw service
+ * rather than the jetpack wrapped versions.
+ *
+ */
+
 EXPORTED_SYMBOLS = ["TestPilotUIBuilder"];
+
+
+const ADDON_BRANCH = "extensions." + id + ".";
 
 const {Cc,Ci,Cu} = require("chrome");
 const UPDATE_CHANNEL_PREF = "app.update.channel";
-const POPUP_SHOW_ON_NEW = "extensions.testpilot.popup.showOnNewStudy";
-const POPUP_CHECK_INTERVAL = "extensions.testpilot.popup.delayAfterStartup";
+const POPUP_SHOW_ON_NEW = ADDON_BRANCH + "popup.showOnNewStudy";
+const POPUP_CHECK_INTERVAL = ADDON_BRANCH + "popup.delayAfterStartup";
 
 var TestPilotUIBuilder = {
   get _prefs() {
@@ -69,7 +78,7 @@ var TestPilotUIBuilder = {
      * again  (don't want to put it back in after user explicitly takes it out-
      * bug 577243 )*/
     let firefoxnav = window.document.getElementById("nav-bar");
-    let pref = "extensions.testpilot.alreadyCustomizedToolbar";
+    let pref = ADDON_BRANCH + "alreadyCustomizedToolbar";
     let alreadyCustomized = this._prefs.getBoolPref(pref);
     let curSet = firefoxnav.currentSet;
 
@@ -121,10 +130,10 @@ var TestPilotUIBuilder = {
     /* Overlay Feedback XUL if we're in the beta update channel, Test Pilot XUL otherwise, and
      * call buildFeedbackInterface() or buildTestPilotInterface(). */
     if (this.channelUsesFeedback()) {
-      window.document.loadOverlay("chrome://testpilot/content/feedback-browser.xul", null);
+      window.document.loadOverlay("chrome://"+id+"/content/feedback-browser.xul", null);
       this.buildFeedbackInterface(window);
     } else {
-      window.document.loadOverlay("chrome://testpilot/content/tp-browser.xul", null);
+      window.document.loadOverlay("chrome://"+id+"/content/tp-browser.xul", null);
       this.buildTestPilotInterface(window);
     }
   }

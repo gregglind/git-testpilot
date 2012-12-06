@@ -6,21 +6,23 @@ EXPORTED_SYMBOLS = ["TestPilotSetup", "POPUP_SHOW_ON_NEW",
                     "POPUP_SHOW_ON_FINISH", "POPUP_SHOW_ON_RESULTS",
                     "ALWAYS_SUBMIT_DATA", "RUN_AT_ALL_PREF"];
 
+let myprefs = require('simple-prefs').prefs;
+let observer = require("observer-service");
 const {Cc,Ci,Cu} = require("chrome");
 
-const EXTENSION_ID = "testpilot@labs.mozilla.com";
-const VERSION_PREF ="extensions.testpilot.lastversion";
-const FIRST_RUN_PREF ="extensions.testpilot.firstRunUrl";
-const RUN_AT_ALL_PREF = "extensions.testpilot.runStudies";
-const POPUP_SHOW_ON_NEW = "extensions.testpilot.popup.showOnNewStudy";
-const POPUP_SHOW_ON_FINISH = "extensions.testpilot.popup.showOnStudyFinished";
-const POPUP_SHOW_ON_RESULTS = "extensions.testpilot.popup.showOnNewResults";
-const POPUP_CHECK_INTERVAL = "extensions.testpilot.popup.delayAfterStartup";
-const POPUP_REMINDER_INTERVAL = "extensions.testpilot.popup.timeBetweenChecks";
-const ALWAYS_SUBMIT_DATA = "extensions.testpilot.alwaysSubmitData";
+const EXTENSION_ID = require('self').id;
+const VERSION_PREF ="lastversion";
+const FIRST_RUN_PREF ="firstRunUrl";
+const RUN_AT_ALL_PREF = "runStudies";
+const POPUP_SHOW_ON_NEW = "popup.showOnNewStudy";
+const POPUP_SHOW_ON_FINISH = "popup.showOnStudyFinished";
+const POPUP_SHOW_ON_RESULTS = "popup.showOnNewResults";
+const POPUP_CHECK_INTERVAL = "popup.delayAfterStartup";
+const POPUP_REMINDER_INTERVAL = "popup.timeBetweenChecks";
+const ALWAYS_SUBMIT_DATA = "alwaysSubmitData";
 const UPDATE_CHANNEL_PREF = "app.update.channel";
 const LOG_FILE_NAME = "TestPilotErrorLog.log";
-const RANDOM_DEPLOY_PREFIX = "extensions.testpilot.deploymentRandomizer";
+const RANDOM_DEPLOY_PREFIX = "deploymentRandomizer";
 
 let {TestPilotUIBuilder} = require('interface');
 
@@ -44,19 +46,14 @@ let TestPilotSetup = {
   },
 
   get _prefs() {
-    return this._application.prefs;
-  },
-
-  __loader: null,
-  get _loader() {
-    if (this.__loader == null) {
-      let Cuddlefish = require("oldsdk/cuddlefish.js");
-      let repo = this._logRepo;
-      this.__loader = new Cuddlefish.Loader(
-          {rootPaths: ["resource://testpilot/modules/",
-                     "resource://testpilot/modules/lib/"],
-           console: repo.getLogger("TestPilot.Loader")
-      });
+    return { 'getValue': function(key,default_value){
+        let v = myprefs[key];
+        console.log('getting:', key,v,default_value);
+        return (v === undefined) ? default_value : v
+      },
+      'setValue': function(key,value){
+        myprefs[key] = value;
+      }
     }
     return this.__loader;
   },
@@ -105,6 +102,9 @@ let TestPilotSetup = {
       root.level = Log4Moz.Level["All"];
       let appender = new Log4Moz.RotatingFileAppender(logFile, formatter);
       root.addAppender(appender);
+      if (require('simple-prefs').prefs['logtoconsole']){
+        root.addAppender(new Log4Moz.ConsoleAppender(formatter));
+      }
       this.__logRepo = Log4Moz.repository;
 
     }

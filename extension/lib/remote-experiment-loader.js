@@ -2,14 +2,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const BASE_URL_PREF = "extensions.testpilot.indexBaseURL";
-const SSL_DOWNLOAD_REQUIRED_PREF = "extensions.testpilot.ssldownloadrequired";
+const PREFBASE = "extensions." + require('self').id + "."
+const BASE_URL_PREF = PREFBASE + "indexBaseURL";
+const SSL_DOWNLOAD_REQUIRED_PREF = PREFBASE + "ssldownloadrequired";
+
 
 var Cuddlefish = require("oldsdk/cuddlefish");
 var resolveUrl = require("url").resolve;
 var SecurableModule = require("oldsdk/securable-module");
 let JarStore = require("jar-code-store").JarStore;
 let prefs = require("preferences-service");
+let myprefs = require("simple-prefs").prefs;
 
 /* Security info should look like this:
  * Security Info:
@@ -152,7 +155,6 @@ exports.RemoteExperimentLoader.prototype = {
   _init: function(logRepo, fileGetterFunction) {
     this._logger = logRepo.getLogger("TestPilot.Loader");
     this._expLogger = logRepo.getLogger("TestPilot.RemoteCode");
-    let prefs = require("preferences-service");
     this._baseUrl = prefs.get(BASE_URL_PREF, "");
     if (fileGetterFunction != undefined) {
       this._fileGetter = fileGetterFunction;
@@ -160,7 +162,7 @@ exports.RemoteExperimentLoader.prototype = {
       this._fileGetter = downloadFile;
     }
     this._logger.trace("About to instantiate jar store.");
-    this._jarStore = new JarStore();
+    this._jarStore = new JarStore(require("self").id + "-" + myprefs['jarfiledir']);
     let self = this;
     this._logger.trace("About to instantiate cuddlefish loader.");
     this._refreshLoader();
@@ -199,7 +201,6 @@ exports.RemoteExperimentLoader.prototype = {
   },
 
   getLocalizedStudyInfo: function(studiesIndex) {
-    let prefs = require("preferences-service");
     let myLocale = prefs.get("general.useragent.locale", "");
     let studiesToLoad = [];
     for each (let set in studiesIndex) {
@@ -437,8 +438,7 @@ exports.RemoteExperimentLoader.prototype = {
     /* Callback will be called with true or false
      * to let us know whether there are any updates, so that client code can
      * restart any experiment whose code has changed. */
-    let prefs = require("preferences-service");
-    let indexFileName = prefs.get("extensions.testpilot.indexFileName",
+    let indexFileName = prefs.get(PREFBASE + "indexFileName",
                                   "index.json");
     let self = this;
     // Unload everything before checking for updates, to be sure we

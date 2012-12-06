@@ -8,24 +8,36 @@ EXPORTED_SYMBOLS = ["TaskConstants", "TestPilotBuiltinSurvey",
 
 const {Cc,Ci} = require("chrome");
 
-let {Observers} = require("Observers.js");
+let observer = require("observer-service");
 let {MetadataCollector} = require("metadata.js");
 let {Log4Moz} = require("log4moz.js");
 let {sanitizeString, sanitizeJSONStrings} = require("string_sanitizer.js");
 
-const STATUS_PREF_PREFIX = "extensions.testpilot.taskstatus.";
-const START_DATE_PREF_PREFIX = "extensions.testpilot.startDate.";
-const RECUR_PREF_PREFIX = "extensions.testpilot.reSubmit.";
-const RECUR_TIMES_PREF_PREFIX = "extensions.testpilot.recurCount.";
-const SURVEY_ANSWER_PREFIX = "extensions.testpilot.surveyAnswers.";
+let myprefs = require('simple-prefs').prefs;
+let prefs =
+     { 'getValue': function(key,default_value){
+        let v = myprefs[key];
+        console.log('getting:', key,v,default_value);
+        return (v === undefined) ? default_value : v
+      },
+      'setValue': function(key,value){
+        myprefs[key] = value;
+      }
+};
+
+const STATUS_PREF_PREFIX = "taskstatus.";
+const START_DATE_PREF_PREFIX = "startDate.";
+const RECUR_PREF_PREFIX = "reSubmit.";
+const RECUR_TIMES_PREF_PREFIX = "recurCount.";
+const SURVEY_ANSWER_PREFIX = "surveyAnswers.";
 const EXPIRATION_DATE_FOR_DATA_SUBMISSION_PREFIX =
-  "extensions.testpilot.expirationDateForDataSubmission.";
+  "expirationDateForDataSubmission.";
 const DATE_FOR_DATA_DELETION_PREFIX =
-  "extensions.testpilot.dateForDataDeletion.";
-const GUID_PREF_PREFIX = "extensions.testpilot.taskGUID.";
-const RETRY_INTERVAL_PREF = "extensions.testpilot.uploadRetryInterval";
+  "dateForDataDeletion.";
+const GUID_PREF_PREFIX = "taskGUID.";
+const RETRY_INTERVAL_PREF = "uploadRetryInterval";
 const TIME_FOR_DATA_DELETION = 7 * (24 * 60 * 60 * 1000); // 7 days
-const DATA_UPLOAD_PREF = "extensions.testpilot.dataUploadURL";
+const DATA_UPLOAD_PREF = "dataUploadURL";
 const DEFAULT_THUMBNAIL_URL = "chrome://testpilot/skin/badge-default.png";
 
 
@@ -70,7 +82,7 @@ var TestPilotTask = {
   _taskInit: function TestPilotTask__taskInit(id, title, url, summary, thumb) {
     this._id = id;
     this._title = title;
-    this._status = Application.prefs.getValue(STATUS_PREF_PREFIX + this._id,
+    this._status = prefs.getValue(STATUS_PREF_PREFIX + this._id,
                                               TaskConstants.STATUS_NEW);
     this._url = url;
     this._summary = summary;
@@ -132,7 +144,7 @@ var TestPilotTask = {
   },
 
   get uploadUrl() {
-    let url = Application.prefs.getValue(DATA_UPLOAD_PREF, "");
+    let url = prefs.getValue(DATA_UPLOAD_PREF, "");
     return url + this._id;
   },
 
@@ -191,10 +203,10 @@ var TestPilotTask = {
     logger.info("Changing task " + this._id + " status to " + newStatus);
     this._status = newStatus;
     // Set the pref:
-    Application.prefs.setValue(STATUS_PREF_PREFIX + this._id, newStatus);
+    prefs.setValue(STATUS_PREF_PREFIX + this._id, newStatus);
     // Notify user of status change:
     if (!suppressNotification) {
-      Observers.notify("testpilot:task:changed", "", null);
+      observer.notify("testpilot:task:changed", "", null);
     }
   },
 
@@ -220,7 +232,7 @@ var TestPilotTask = {
   getGuid: function TPS_getGuid(id) {
     // If there is a guid for the task with the given id (not neccessarily this one!)
     // then use it; if there isn't, generate it and store it.
-    let guid = Application.prefs.getValue(GUID_PREF_PREFIX + id, "");
+    let guid = prefs.getValue(GUID_PREF_PREFIX + id, "");
     if (guid == "") {
       let uuidGenerator =
         Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
@@ -229,7 +241,7 @@ var TestPilotTask = {
       if (guid.indexOf("{") == 0) {
         guid = guid.substring(1, (guid.length - 1));
       }
-      Application.prefs.setValue(GUID_PREF_PREFIX + id, guid);
+      prefs.setValue(GUID_PREF_PREFIX + id, guid);
     }
     return guid;
   }
@@ -277,7 +289,7 @@ TestPilotExperiment.prototype = {
     this._recurrenceInterval = expInfo.recurrenceInterval;
 
     let prefName = START_DATE_PREF_PREFIX + this._id;
-    let startDateString = Application.prefs.getValue(prefName, false);
+    let startDateString = prefs.getValue(prefName, false);
     if (startDateString) {
       // If this isn't the first time we're starting, use the start date
       // already stored in prefs.
@@ -287,10 +299,10 @@ TestPilotExperiment.prototype = {
       // Otherwise, start immediately!
       if (expInfo.startDate) {
         this._startDate = Date.parse(expInfo.startDate);
-        Application.prefs.setValue(prefName, expInfo.startDate);
+        prefs.setValue(prefName, expInfo.startDate);
       } else {
         this._startDate = this._now();
-        Application.prefs.setValue(prefName, (new Date(this._startDate)).toString());
+        prefs.setValue(prefName, (new Date(this._startDate)).toString());
       }
     }
 
@@ -340,7 +352,7 @@ TestPilotExperiment.prototype = {
 
   get recurPref() {
     let prefName = RECUR_PREF_PREFIX + this._id;
-    return Application.prefs.getValue(prefName, TaskConstants.ASK_EACH_TIME);
+    return prefs.getValue(prefName, TaskConstants.ASK_EACH_TIME);
   },
 
   getDataStoreAsJSON: function(callback) {
@@ -576,7 +588,7 @@ TestPilotExperiment.prototype = {
     this._startDate += ms;
     this._endDate += ms;
     let prefName = START_DATE_PREF_PREFIX + this._id;
-    Application.prefs.setValue(prefName,
+    prefs.setValue(prefName,
                                (new Date(this._startDate)).toString());
   },
 
@@ -585,7 +597,7 @@ TestPilotExperiment.prototype = {
     // has recurred - it will be 1 on the first run, 2 on the second run,
     // etc.
     if (this._recursAutomatically) {
-      return Application.prefs.getValue(RECUR_TIMES_PREF_PREFIX + this._id,
+      return prefs.getValue(RECUR_TIMES_PREF_PREFIX + this._id,
                                         1);
     } else {
       return 0;
@@ -594,31 +606,31 @@ TestPilotExperiment.prototype = {
 
   set _expirationDateForDataSubmission(date) {
     if (date) {
-      Application.prefs.setValue(
+      prefs.setValue(
         EXPIRATION_DATE_FOR_DATA_SUBMISSION_PREFIX + this._id,
         (new Date(date)).toString());
     } else {
-      Application.prefs.setValue(
+      prefs.setValue(
         EXPIRATION_DATE_FOR_DATA_SUBMISSION_PREFIX + this._id, "");
     }
   },
 
   get _expirationDateForDataSubmission() {
-    return Application.prefs.getValue(
+    return prefs.getValue(
       EXPIRATION_DATE_FOR_DATA_SUBMISSION_PREFIX + this._id, "");
   },
 
   set _dateForDataDeletion(date) {
     if (date) {
-      Application.prefs.setValue(
+      prefs.setValue(
         DATE_FOR_DATA_DELETION_PREFIX + this._id, (new Date(date)).toString());
     } else {
-      Application.prefs.setValue(DATE_FOR_DATA_DELETION_PREFIX + this._id, "");
+      prefs.setValue(DATE_FOR_DATA_DELETION_PREFIX + this._id, "");
     }
   },
 
   get _dateForDataDeletion() {
-    return Application.prefs.getValue(
+    return prefs.getValue(
       DATE_FOR_DATA_DELETION_PREFIX + this._id, "");
   },
 
@@ -646,7 +658,7 @@ TestPilotExperiment.prototype = {
         let numTimesRun = this._numTimesRun;
         numTimesRun++;
         this._logger.trace("Test recurring... incrementing " + RECUR_TIMES_PREF_PREFIX + this._id + " to " + numTimesRun);
-        Application.prefs.setValue( RECUR_TIMES_PREF_PREFIX + this._id,
+        prefs.setValue( RECUR_TIMES_PREF_PREFIX + this._id,
                                     numTimesRun );
         this._logger.trace("Incremented it.");
       }
@@ -655,7 +667,7 @@ TestPilotExperiment.prototype = {
     // If the notify-on-new-study pref is turned off, and the test doesn't
     // require opt-in, then it can jump straight ahead to STARTING.
     if (!this._optInRequired &&
-        !Application.prefs.getValue("extensions.testpilot.popup.showOnNewStudy",
+        !prefs.getValue("popup.showOnNewStudy",
                                     false) &&
         (this._status == TaskConstants.STATUS_NEW ||
          this._status == TaskConstants.STATUS_PENDING)) {
@@ -701,8 +713,8 @@ TestPilotExperiment.prototype = {
           this._dataStore.wipeAllData();
 	  setDataDeletionDate = false;
         } else {
-          if (Application.prefs.getValue(
-              "extensions.testpilot.alwaysSubmitData", false)) {
+          if (prefs.getValue(
+              "alwaysSubmitData", false)) {
             this.upload(function(success) {
 	      if (success) {
                 Observers.notify(
@@ -712,8 +724,8 @@ TestPilotExperiment.prototype = {
           }
 	}
       } else {
-        if (Application.prefs.getValue(
-            "extensions.testpilot.alwaysSubmitData", false)) {
+        if (prefs.getValue(
+            "alwaysSubmitData", false)) {
           this.upload(function(success) {
 	    if (success) {
               Observers.notify("testpilot:task:dataAutoSubmitted", self, null);
@@ -732,8 +744,8 @@ TestPilotExperiment.prototype = {
     } else {
       // only do this if the state is already finished and the data is expired.
       if (this._status == TaskConstants.STATUS_FINISHED) {
-	if (Application.prefs.getValue(
-	    "extensions.testpilot.alwaysSubmitData", false)) {
+	if (prefs.getValue(
+	    "alwaysSubmitData", false)) {
           this.upload(function(success) {
 	    if (success) {
               Observers.notify("testpilot:task:dataAutoSubmitted", self, null);
@@ -843,7 +855,7 @@ TestPilotExperiment.prototype = {
 	      retryCount = 0;
             }
             let interval =
-	      Application.prefs.getValue(RETRY_INTERVAL_PREF, 3600000); // 1 hour
+	      prefs.getValue(RETRY_INTERVAL_PREF, 3600000); // 1 hour
             let delay =
               parseInt(Math.random() * Math.pow(2, retryCount) * interval);
             self._uploadRetryTimer.initWithCallback(
@@ -873,7 +885,7 @@ TestPilotExperiment.prototype = {
     if (reason) {
       // Send us the reason...
       // (TODO: include metadata?)
-      let url = Application.prefs.getValue(DATA_UPLOAD_PREF, "") + "opt-out";
+      let url = prefs.getValue(DATA_UPLOAD_PREF, "") + "opt-out";
       let answer = {id: this._id,
                     reason: reason};
       let dataString = JSON.stringify(answer);
@@ -913,7 +925,7 @@ TestPilotExperiment.prototype = {
     // value is NEVER_SUBMIT, ALWAYS_SUBMIT, or ASK_EACH_TIME
     let prefName = RECUR_PREF_PREFIX + this._id;
     this._logger.info("Setting recur pref to " + value);
-    Application.prefs.setValue(prefName, value);
+    prefs.setValue(prefName, value);
   }
 };
 TestPilotExperiment.prototype.__proto__ = TestPilotTask;
@@ -974,7 +986,7 @@ TestPilotBuiltinSurvey.prototype = {
 
   get oldAnswers() {
     let surveyResults =
-      Application.prefs.getValue(SURVEY_ANSWER_PREFIX + this._id, null);
+      prefs.getValue(SURVEY_ANSWER_PREFIX + this._id, null);
     if (!surveyResults) {
       return null;
     } else {
@@ -996,7 +1008,7 @@ TestPilotBuiltinSurvey.prototype = {
     if (this._versionNumber) {
       surveyResults["version_number"] = this._versionNumber;
     }
-    Application.prefs.setValue(prefName, JSON.stringify(surveyResults));
+    prefs.setValue(prefName, JSON.stringify(surveyResults));
     if (this._studyId) {
       this._upload(callback, 0);
     } else {
@@ -1016,7 +1028,7 @@ TestPilotBuiltinSurvey.prototype = {
         json.metadata.task_guid = self.getGuid(self._studyId);
       }
       let pref = SURVEY_ANSWER_PREFIX + self._id;
-      let surveyAnswers = JSON.parse(Application.prefs.getValue(pref, "{}"));
+      let surveyAnswers = JSON.parse(prefs.getValue(pref, "{}"));
       json.survey_data = sanitizeJSONStrings(surveyAnswers);
       callback(JSON.stringify(json));
     });
@@ -1055,7 +1067,7 @@ TestPilotBuiltinSurvey.prototype = {
               retryCount = 0;
 	    }
 	    let interval =
-              Application.prefs.getValue(RETRY_INTERVAL_PREF, 3600000); // 1 hour
+              prefs.getValue(RETRY_INTERVAL_PREF, 3600000); // 1 hour
 	    let delay =
 	      parseInt(Math.random() * Math.pow(2, retryCount) * interval);
 	    self._uploadRetryTimer.initWithCallback(
@@ -1139,7 +1151,7 @@ function TestPilotLegacyStudy(studyInfo) {
 };
 TestPilotLegacyStudy.prototype = {
   _init: function TestPilotLegacyStudy__init(studyInfo) {
-    let stat = Application.prefs.getValue(STATUS_PREF_PREFIX + studyInfo.id,
+    let stat = prefs.getValue(STATUS_PREF_PREFIX + studyInfo.id,
                                           null);
     this._taskInit( studyInfo.id,
                     studyInfo.name,
@@ -1168,7 +1180,7 @@ TestPilotLegacyStudy.prototype = {
 
     if (studyInfo.duration) {
       let prefName = START_DATE_PREF_PREFIX + this._id;
-      let startDateString = Application.prefs.getValue(prefName, null);
+      let startDateString = prefs.getValue(prefName, null);
       if (startDateString) {
         this._startDate = Date.parse(startDateString);
         this._endDate = this._startDate + duration * (24 * 60 * 60 * 1000);

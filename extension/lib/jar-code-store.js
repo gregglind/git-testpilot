@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+let {Cc,Ci,Cu} = require("chrome");
+let prefs = require('simple-prefs').prefs;
 
 function JarStore() {
   try {
@@ -20,7 +22,7 @@ JarStore.prototype = {
   _init: function( baseDirectory ) {
     let prefs = require("preferences-service");
     this._localOverrides = JSON.parse(
-      prefs.get("extensions.testpilot.codeOverride", "{}"));
+      prefs["codeOverride"] || "{}");  // TODO
 
     let dir = Cc["@mozilla.org/file/directory_service;1"].
       getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
@@ -218,7 +220,7 @@ JarStore.prototype = {
   setLocalOverride: function(path, code) {
     let prefs = require("preferences-service");
     this._localOverrides[path] = code;
-    prefs.set("extensions.testpilot.codeOverride",
+    prefs.set("codeOverride",
               JSON.stringify(this._localOverrides));
   }
 };
