@@ -4,12 +4,12 @@
 "use strict";
 
 const windowUtils = require("window-utils");
-const { Class } = require("heritage");
+const { Class } = require("sdk/core/heritage");
 const { validateOptions } = require("api-utils/api-utils");
-const { on, emit, once, off } = require("api-utils/event/core");
-const { isBrowser } = require("api-utils/window/utils");
-const { EventTarget } = require('api-utils/event/target');
-const { unload } = require("unload+");
+const { on, emit, once, off } = require("sdk/event/core");
+const { isBrowser } = require("sdk/window/utils");
+const { EventTarget } = require('sdk/event/target');
+const { unload } = require("unload");  // potentially wrong!
 
 const menuitemNS = require("namespace").ns();
 const NS_XUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
@@ -95,7 +95,7 @@ function addMenuitems(self, options) {
         if (!self.disabled)
           emit(self, 'command');
       }, true);
-  
+
       // add unloader
       let unloader = function unloader() {
         menuitem.parentNode && menuitem.parentNode.removeChild(menuitem);
@@ -105,7 +105,7 @@ function addMenuitems(self, options) {
         remover();
         unloader();
       });
-      let remover = unload(unloader, window);
+      //let remover = unload(unloader, window);
     }
   });
   return {menuitems: menuitems};
