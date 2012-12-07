@@ -702,7 +702,7 @@ TestPilotExperiment.prototype = {
         if (this.recurPref == TaskConstants.ALWAYS_SUBMIT) {
           this._logger.info("Automatically Uploading Data");
           this.upload(function(success) {
-            Observers.notify("testpilot:task:dataAutoSubmitted", self, null);
+            observer.notify("testpilot:task:dataAutoSubmitted", self, null);
 	  });
         } else if (this.recurPref == TaskConstants.NEVER_SUBMIT) {
           this._logger.info("Automatically opting out of uploading data");
@@ -714,7 +714,7 @@ TestPilotExperiment.prototype = {
               "alwaysSubmitData", false)) {
             this.upload(function(success) {
 	      if (success) {
-                Observers.notify(
+                observer.notify(
 		  "testpilot:task:dataAutoSubmitted", self, null);
 	      }
 	    });
@@ -725,7 +725,7 @@ TestPilotExperiment.prototype = {
             "alwaysSubmitData", false)) {
           this.upload(function(success) {
 	    if (success) {
-              Observers.notify("testpilot:task:dataAutoSubmitted", self, null);
+              observer.notify("testpilot:task:dataAutoSubmitted", self, null);
 	    }
 	  });
         }
@@ -745,7 +745,7 @@ TestPilotExperiment.prototype = {
 	    "alwaysSubmitData", false)) {
           this.upload(function(success) {
 	    if (success) {
-              Observers.notify("testpilot:task:dataAutoSubmitted", self, null);
+              observer.notify("testpilot:task:dataAutoSubmitted", self, null);
 	    }
 	  });
         } else if (this._expirationDateForDataSubmission.length > 0) {
