@@ -25,7 +25,7 @@ const UPDATE_CHANNEL_PREF = "app.update.channel";
 const LOG_FILE_NAME = "TestPilotErrorLog.log";
 const RANDOM_DEPLOY_PREFIX = "deploymentRandomizer";
 
-let {TestPilotUIBuilder} = require('interface');
+let {TestPilotUIBuilder,switchtab} = require('interface');
 
 let TestPilotSetup = {
   didReminderAfterStartup: false,
@@ -370,7 +370,7 @@ let TestPilotSetup = {
 	  if (task) {
             task.loadPage();
 	  } else {
-            self._openChromeless(linkUrl);
+            switchtab(linkUrl);
 	  }
           self._hideNotification(window, onCloseCallback);
         }
@@ -388,11 +388,6 @@ let TestPilotSetup = {
     popup.hidden = false;
     popup.setAttribute("open", "true");
     popup.openPopup( anchor, "after_end", xOffset, 0);
-  },
-
-  _openChromeless: function TPS__openChromeless(url) {
-    let window = this._getFrontBrowserWindow();
-    window.TestPilotWindowUtils.openChromeless(url);
   },
 
   _hideNotification: function TPS__hideNotification(window, onCloseCallback) {

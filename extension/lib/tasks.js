@@ -13,6 +13,7 @@ let observer = require("observer-service");
 let {MetadataCollector} = require("metadata.js");
 let {Log4Moz} = require("log4moz.js");
 let {sanitizeString, sanitizeJSONStrings} = require("string_sanitizer.js");
+let {switchtab} = require("interface");
 
 let myprefs = require('simple-prefs').prefs;
 let prefs =
@@ -209,11 +210,8 @@ var TestPilotTask = {
   },
 
   loadPage: function TestPilotTask_loadPage() {
-    // open the link in the chromeless window
-    var wm = Cc["@mozilla.org/appshell/window-mediator;1"]
-                       .getService(Ci.nsIWindowMediator);
-    let window = wm.getMostRecentWindow("navigator:browser");
-    window.TestPilotWindowUtils.openChromeless(this.defaultUrl);
+    switchtab(this.defaultUrl);
+
     /* Advance the status when the user sees the page, so that we can stop
      * notifying them about stuff they've seen. */
     if (this._status == TaskConstants.STATUS_NEW) {
