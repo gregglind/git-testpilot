@@ -69,9 +69,6 @@ const TaskConstants = {
  * data collection period so they are never STARTING or IN_PROGRESS or
  * FINISHED, they go straight from PENDING to SUBMITTED or CANCELED. */
 
-let Application = Cc["@mozilla.org/fuel/application;1"]
-                  .getService(Ci.fuelIApplication);
-
 // Prototype for both TestPilotSurvey and TestPilotExperiment.
 var TestPilotTask = {
   _id: null,
