@@ -128,10 +128,8 @@ let TestPilotSetup = {
 
   __obs: null,
   get _obs() {
-    if (this.__obs == null) {
-      this.__obs = this._loader.require("observer-service");
-    }
-    return this.__obs;
+    // TODO, completely eliminate, superceded by jetpack
+    return observer
   },
 
   globalStartup: function TPS__doGlobalSetup() {
