@@ -2,12 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+
 let {Cc,Ci,Cu} = require("chrome");
 let prefs = require('simple-prefs').prefs;
 
-function JarStore() {
+let id = require("self").id;
+let JARFILEDIR = prefs['jarfiledir'] || "TestPilotExperimentFiles"
+
+function JarStore(path) {
   try {
-  let baseDirName = "TestPilotExperimentFiles"; // this should go in pref?
+  let baseDirName = path || JARFILEDIR;
   this._baseDir = null;
   this._localOverrides = {}; //override with code for debugging purposes
   this._index = {}; // tells us which jar file to look in for each module
@@ -20,6 +24,7 @@ function JarStore() {
 JarStore.prototype = {
 
   _init: function( baseDirectory ) {
+    console.log('initing jar store at', baseDirectory);
     let prefs = require("preferences-service");
     this._localOverrides = JSON.parse(
       prefs["codeOverride"] || "{}");  // TODO
@@ -31,7 +36,7 @@ JarStore.prototype = {
     if( !this._baseDir.exists() || !this._baseDir.isDirectory() ) {
       // if jar storage directory doesn't exist, create it:
       console.info("Creating: " + this._baseDir.path + "\n");
-      this._baseDir.create(Ci.nsIFile.DIRECTORY_TYPE, 0777);
+      this._baseDir.create(Ci.nsIFile.DIRECTORY_TYPE, parseInt("0777",8));
     } else {
       // Process any jar files already on disk from previous runs:
       // Build lookup index of module->jar file and modified dates
@@ -47,6 +52,8 @@ JarStore.prototype = {
       }
     }
   },
+
+  get basedir() this._baseDir, // a wrapped dirpath.  use 'path' to see it as text
 
   _indexJar: function(jarFile) {
     let zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
@@ -111,10 +118,10 @@ JarStore.prototype = {
         jarFile.remove(false);
       }
       // From https://developer.mozilla.org/en/Code_snippets/File_I%2f%2fO#Getting_special_files
-      jarFile.create( Ci.nsIFile.NORMAL_FILE_TYPE, 0600);
+      jarFile.create( Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0600",8));
       let stream = Cc["@mozilla.org/network/safe-file-output-stream;1"].
                       createInstance(Ci.nsIFileOutputStream);
-      stream.init(jarFile, 0x04 | 0x08 | 0x20, parseInt("0600", 8), 0); // readwrite, create, truncate
+      stream.init(jarFile, 0x04 | 0x08 | 0x20, parseInt("0600",8), 0); // readwrite, create, truncate
       stream.write(rawData, rawData.length);
       if (stream instanceof Ci.nsISafeOutputStream) {
         stream.finish();
@@ -152,7 +159,7 @@ JarStore.prototype = {
       module = path;
     }
     if (this._index[module]) {
-      let resolvedPath = this._index[module] + "!" + module + ".js";
+      let resolvedPath = this._index[module] + "!/" + module + ".js";
       return resolvedPath;
     }
     return null;
