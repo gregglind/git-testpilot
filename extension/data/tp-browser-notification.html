@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- resource://testpilot-at-labs-dot-mozilla-dot-com/testpilot/data/tp-browser-notification.html-->
+<head>
+	<meta charset="utf-8">
+    <title>Notification Window For Test Pilot</title>
+</head>
+<body>
+<div><img src="skin/all/testpilot_32x32.png" /></div>
+<div id="title">Study Title</div>
+<div id="message">Message</div>
+<!-- this all needs li0n work -->
+<!-- should these be data-action -->
+<div><input type="button" data-action="takesurvey" value="Take Survey"></input></div>
+<div><input type="button" data-action="always" value="always"></input></div>
+<div><input type="button" data-action="submit" value="submit"></input></div>
+<div><input type="button" data-action="nosubmit" value="no"></input></div>
+<div><input type="button" data-action="close" value="close window"></input></div>
+<div id='output'></div>
+
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript">
+
+$(function(){
+	$(':button').click(function(evt){
+		var t = $(this);
+		var d = {id:t.attr('id'),name:t.attr('name'),data:t.data(),value:t.val()};
+		//$('#output').append("<p>got action "+ t.val() +"</p>")
+		$('#output').append("<p>"+JSON.stringify(d)+"</p>")
+		addon.port.emit("action",d);
+	})
+})
+</script>
+
+</body>
+</html>

@@ -2,13 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// https://github.com/msujaws/Cheevos/blob/master/lib/main.js#L773
+
 "use strict";
 
 module.metadata = {
   "stability": "stable"
 };
 
-if (!require("./system/xul-app").is("Firefox")) {
+if (!require("sdk/system/xul-app").is("Firefox")) {
   throw new Error([
     "The panel module currently supports only Firefox.  In the future ",
     "we would like it to support other applications, however.  Please see ",
@@ -19,12 +21,12 @@ if (!require("./system/xul-app").is("Firefox")) {
 
 const { Cc, Ci } = require("chrome");
 
-const { validateOptions: valid } = require('./deprecated/api-utils');
-const { Symbiont } = require('./content/content');
-const { EventEmitter } = require('./deprecated/events');
-const timer = require('./timers');
-const runtime = require('./system/runtime');
-const { getMostRecentBrowserWindow } = require('./window/utils');
+const { validateOptions: valid } = require('sdk/deprecated/api-utils');
+const { Symbiont } = require('sdk/content/content');
+const { EventEmitter } = require('sdk/deprecated/events');
+const timer = require('timers');
+const runtime = require('sdk/system/runtime');
+const { getMostRecentBrowserWindow } = require('sdk/window/utils');
 
 const windowMediator = Cc['@mozilla.org/appshell/window-mediator;1'].
                        getService(Ci.nsIWindowMediator);
@@ -116,13 +118,19 @@ const Panel = Symbiont.resolve({
   get isShowing() !!this._xulPanel && this._xulPanel.state == "open",
 
   /* Public API: Panel.show */
-  show: function show(anchor) {
+  show: function show(anchor,options) {
+    // tbd
+    let {where,styles,persistent} = options;
+
     anchor = anchor || null;
     let document = getWindow(anchor).document;
     let xulPanel = this._xulPanel;
     if (!xulPanel) {
       xulPanel = this._xulPanel = document.createElementNS(XUL_NS, 'panel');
       xulPanel.setAttribute("type", "arrow");
+      if (options.persistent) {
+        xulPanel.setAttribute('noautohide',true);
+      }
 
       // One anonymous node has a big padding that doesn't work well with
       // Jetpack, as we would like to display an iframe that completely fills
@@ -150,6 +158,7 @@ const Panel = Symbiont.resolve({
         frame.style.borderRadius = "6px";
         frame.style.padding = "1px";
       }
+
 
       // Load an empty document in order to have an immediatly loaded iframe,
       // so swapFrameLoaders is going to work without having to wait for load.
