@@ -12,7 +12,7 @@ let AddonManagerMod = {};
 Cu.import("resource://gre/modules/AddonManager.jsm",AddonManagerMod);
 let {AddonManager} = AddonManagerMod;
 
-const STATUS_PREF_PREFIX = "extensions.testpilot.taskstatus.";
+const STATUS_PREF_PREFIX = "microtestpilot.taskstatus.";
 const LOCALE_PREF = "general.useragent.locale";
 const UPDATE_CHANNEL_PREF = "app.update.channel";
 const DATA_UPLOAD_URL = "https://testpilot.mozillalabs.com/submit/";
