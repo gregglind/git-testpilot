@@ -9,7 +9,7 @@ const {Cc,Ci,Cm,Cu} = require("chrome");
 let {sanitizeString, sanitizeJSONStrings} = require('string_sanitizer');
 
 const LOCALE_PREF = "general.useragent.locale";
-const EXTENSION_ID = "testpilot@labs.mozilla.com";
+const EXTENSION_ID = require('self').id;
 const PREFIX_NS_EM = "http://www.mozilla.org/2004/em-rdf#";
 const PREFIX_ITEM_URI = "urn:mozilla:item:";
 const UPDATE_CHANNEL_PREF = "app.update.channel";
@@ -17,7 +17,7 @@ const UPDATE_CHANNEL_PREF = "app.update.channel";
 /* The following preference, if present, stores answers to the basic panel
  * survey, which tell us user's general tech level, and so should be included
  * with any upload.*/
-const SURVEY_ANS = "extensions.testpilot.surveyAnswers.basic_panel_survey_2";
+const SURVEY_ANS = "surveyAnswers.basic_panel_survey_2";
 
 let Application = Cc["@mozilla.org/fuel/application;1"]
                   .getService(Ci.fuelIApplication);
@@ -115,7 +115,7 @@ let MetadataCollector = {
   },
 
   getSurveyAnswers: function MetadataCollector_getSurveyAnswers() {
-    let answers = Application.prefs.getValue(SURVEY_ANS, "");
+    let answers = require('simple-prefs').prefs[SURVEY_ANS] || "";
     if (answers == "") {
       return "";
     } else {
