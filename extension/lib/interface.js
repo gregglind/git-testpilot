@@ -21,6 +21,7 @@ EXPORTED_SYMBOLS = ["TestPilotUIBuilder"];
 
 const { id, data } = require("self");
 const appname = require("xul-app").name;
+let tabs = require('tabs');
 
 //let {switchtab,banner,doorhanger,nbButtons:B,anchorit} = require("moz-ui");
 
@@ -170,6 +171,23 @@ let anchorit = exports.anchorit = function(elements){
     return null;  // I got nothin'
 };
 
+
+/** Open or reopen a tab, based on url.
+ * options will only be used in the case of a new tab.  if the tab exists,
+ *  it will just activate it
+ */
+exports.switchtab = function(options) {
+    var url = options.url || options;  // tabs.open takes both
+    if (! options) options = {};
+    for (let ii in tabs) {
+        let tab = tabs[ii];
+        if (tab.url == url) {
+            tab.activate();
+            return tab;
+        }
+    }
+    return tabs.open(options);
+};
 
 // updates, questions, and notices
 // TODO li0n!
