@@ -19,6 +19,10 @@
 
 EXPORTED_SYMBOLS = ["TestPilotUIBuilder"];
 
+const { id, data } = require("self");
+const appname = require("xul-app").name;
+
+//let {switchtab,banner,doorhanger,nbButtons:B,anchorit} = require("moz-ui");
 
 const ADDON_BRANCH = "extensions." + id + ".";
 
@@ -138,5 +142,97 @@ var TestPilotUIBuilder = {
     }
   }
 };
+
+
+
+// UTILS... here for now...
+const windowUtils = require("window-utils");
+const window = windowUtils.activeBrowserWindow;
+
+let anchorit = exports.anchorit = function(elements){
+    if (! elements) {
+        elements = ['home-button'];  // Where else should it try to anchorit?
+    }
+    for (let ii in elements) {
+        let guess = elements[ii];
+        let el = null;
+        console.log("guessing:", guess);
+        if (typeof(guess) == "string") {
+            el = window.document.getElementById(guess);
+        } else {  // TODO, this should typecheck against elements, then throw?
+            el = guess;
+        }
+        if (el) {
+            console.log("got element!");
+            return el;
+        };
+    };
+    return null;  // I got nothin'
+};
+
+
+// updates, questions, and notices
+// TODO li0n!
+
+
+// TODO: should this take args about the task itself?
+let tpdialogue = function(){
+  let mypanel = require("tppanel").Panel({
+      width:  300,
+      height: 300,
+      contentURL:data.url('tp-browser-notification.html'),
+      //onHide:  function(evt){mypanel.show()}
+  })
+
+  // maybe this should live over on task / setup side?
+  mypanel.port.on("action", function(data) {
+    console.log('got action!');
+    console.log(JSON.stringify(data));
+
+    switch (data.data.action) {
+      case "close":
+          mypanel.destroy();
+          break;
+      case "takesurvey":
+          require("tabs").open("http://zooborns.com");
+          break;
+      default:
+          break;
+    }
+  });
+  return mypanel
+}
+
+
+let ask_survey_desktop = function(){
+
+};
+
+let ask_experiment_upload_desktop = function(){
+
+}
+
+let ask_experiment_install_desktop = function(){
+
+};
+
+let inform_upload_desktop = function(){
+};
+
+switch (appname) {
+    case "Firefox":
+        exports.tpdialogue  = tpdialogue;
+        exports.ask_survey = ask_survey_desktop;
+        exports.ask_experiment_upload = ask_experiment_upload_desktop;
+        exports.ask_experiment_install = ask_experiment_install_desktop;
+        exports.inform_upload = inform_upload_desktop
+        break;
+    case "Fennec":
+        throw Error("we don't know how to run UI on mobile yet");
+        break;
+    default:
+        throw Error("no ui available on platform: " + appname);
+};
+
 
 EXPORTED_SYMBOLS.forEach(function(x){exports[x] = this[x]});
