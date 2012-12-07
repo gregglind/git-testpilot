@@ -8,6 +8,7 @@ EXPORTED_SYMBOLS = ["TaskConstants", "TestPilotBuiltinSurvey",
 
 const {Cc,Ci} = require("chrome");
 
+let l10n = require('l10n').get;
 let observer = require("observer-service");
 let {MetadataCollector} = require("metadata.js");
 let {Log4Moz} = require("log4moz.js");
@@ -377,17 +378,11 @@ TestPilotExperiment.prototype = {
 	    content = self.webContent.completedHtml;
 	  } else {
 	    // for after deleting data manually by user.
-            let stringBundle =
-              Cc["@mozilla.org/intl/stringbundle;1"].
-                getService(Ci.nsIStringBundleService).
-	          createBundle("chrome://testpilot/locale/main.properties");
 	    let link =
 	      '<a href="' + self.infoPageUrl + '">' + self.title + '</a>';
 	    content =
-	      '<h2>' + stringBundle.formatStringFromName(
-	        "testpilot.finishedTask.finishedStudy", [link], 1) + '</h2>' +
-	      '<p>' + stringBundle.GetStringFromName(
-	        "testpilot.finishedTask.allRelatedDataDeleted") + '</p>';
+	      '<h2>' + l10n("testpilot.finishedTask.finishedStudy", link) + '</h2>' +
+	      '<p>' + l10n("testpilot.finishedTask.allRelatedDataDeleted") + '</p>';
 	  }
 	  callback(content);
 	});

@@ -6,6 +6,7 @@ EXPORTED_SYMBOLS = ["TestPilotSetup", "POPUP_SHOW_ON_NEW",
                     "POPUP_SHOW_ON_FINISH", "POPUP_SHOW_ON_RESULTS",
                     "ALWAYS_SUBMIT_DATA", "RUN_AT_ALL_PREF"];
 
+let l10n = require("l10n").get;
 let myprefs = require('simple-prefs').prefs;
 let observer = require("observer-service");
 const {Cc,Ci,Cu} = require("chrome");
@@ -112,17 +113,6 @@ let TestPilotSetup = {
       this.__taskModule = require("tasks");
     }
     return this.__taskModule;
-  },
-
-  __stringBundle: null,
-  get _stringBundle() {
-    if (this.__stringBundle == null) {
-      this.__stringBundle =
-      Cc["@mozilla.org/intl/stringbundle;1"].
-        getService(Ci.nsIStringBundleService).
-          createBundle("chrome://testpilot/locale/main.properties");
-    }
-    return this.__stringBundle;
   },
 
   __obs: null,
@@ -341,16 +331,13 @@ let TestPilotSetup = {
     alwaysSubmitCheckbox.setAttribute("hidden", !showAlwaysSubmitCheckbox);
     if (showSubmit) {
       if (isExtensionUpdate) {
-        submitBtn.setAttribute("label",
-	  this._stringBundle.GetStringFromName(
-	    "testpilot.notification.update"));
+        submitBtn.setAttribute("label", l10n("testpilot.notification.update"));
 	submitBtn.onclick = function() {
           this._extensionUpdater.check(EXTENSION_ID);
           self._hideNotification(window, onCloseCallback);
 	};
       } else {
-        submitBtn.setAttribute("label",
-	  this._stringBundle.GetStringFromName("testpilot.submit"));
+        submitBtn.setAttribute("label",l10n("testpilot.submit"));
         // Functionality for submit button:
         submitBtn.onclick = function() {
           self._hideNotification(window, onCloseCallback);
@@ -361,12 +348,10 @@ let TestPilotSetup = {
             if (success) {
               self._showNotification(
 		task, true,
-                self._stringBundle.GetStringFromName(
-		  "testpilot.notification.thankYouForUploadingData.message"),
-                self._stringBundle.GetStringFromName(
-		  "testpilot.notification.thankYouForUploadingData"),
+                l10n("testpilot.notification.thankYouForUploadingData.message"),
+                l10n("testpilot.notification.thankYouForUploadingData"),
 		"study-submitted", false, false,
-                self._stringBundle.GetStringFromName("testpilot.moreInfo"),
+                l10n("testpilot.moreInfo"),
 		task.defaultUrl);
             } else {
               // TODO any point in showing an error message here?
@@ -457,13 +442,10 @@ let TestPilotSetup = {
           if (!this._prefs.getValue(ALWAYS_SUBMIT_DATA, false)) {
             this._showNotification(
 	      task, false,
-	      this._stringBundle.formatStringFromName(
-		"testpilot.notification.readyToSubmit.message", [task.title],
-		1),
-	      this._stringBundle.GetStringFromName(
-		"testpilot.notification.readyToSubmit"),
+	      l10n("testpilot.notification.readyToSubmit.message", task.title),
+	      l10n("testpilot.notification.readyToSubmit"),
 	      "study-finished", true, true,
-	      this._stringBundle.GetStringFromName("testpilot.moreInfo"),
+	      l10n("testpilot.moreInfo"),
 	      task.defaultUrl);
             // We return after showing something, because it only makes
             // sense to show one notification at a time!
@@ -483,13 +465,10 @@ let TestPilotSetup = {
           if (task.taskType == TaskConstants.TYPE_EXPERIMENT) {
 	    this._showNotification(
 	      task, false,
-	      this._stringBundle.formatStringFromName(
-		"testpilot.notification.newTestPilotStudy.pre.message",
-		[task.title], 1),
-	      this._stringBundle.GetStringFromName(
-		"testpilot.notification.newTestPilotStudy"),
+	      l10n("testpilot.notification.newTestPilotStudy.pre.message",task.title),
+	      l10n("testpilot.notification.newTestPilotStudy"),
 	      "new-study", false, false,
-	      this._stringBundle.GetStringFromName("testpilot.moreInfo"),
+	      l10n("testpilot.moreInfo"),
 	      task.defaultUrl, false, function() {
                 /* on close callback (Bug 575767) -- when the "new study
                  * starting" popup is dismissed, then the study can start. */
@@ -500,14 +479,13 @@ let TestPilotSetup = {
           } else if (task.taskType == TaskConstants.TYPE_SURVEY) {
 	    this._showNotification(
 	      task, false,
-	      this._stringBundle.formatStringFromName(
-		"testpilot.notification.newTestPilotSurvey.message",
-    // in task.js summary falls back to title if undefined or empty, but we double make sure :)
-		[task.summary || task.title],1),
-              this._stringBundle.GetStringFromName(
-		"testpilot.notification.newTestPilotSurvey"),
-	      "new-study", false, false,
-	      this._stringBundle.GetStringFromName("testpilot.takeSurvey"),
+        l10n("testpilot.notification.newTestPilotSurvey.message",task.summary || task.title),
+          // in task.js summary falls back to title if undefined or empty, but we double make sure :)
+
+        l10n("testpilot.notification.newTestPilotSurvey"),
+        "new-survey",
+	      false, false,
+        l10n("testpilot.takeSurvey"),
 	      task.defaultUrl);
             task.changeStatus(TaskConstants.STATUS_IN_PROGRESS, true);
             return;
@@ -524,13 +502,10 @@ let TestPilotSetup = {
             task.status == TaskConstants.STATUS_NEW) {
 	  this._showNotification(
 	    task, true,
-	    this._stringBundle.formatStringFromName(
-	      "testpilot.notification.newTestPilotResults.message",
-	      [task.title], 1),
-            this._stringBundle.GetStringFromName(
-	      "testpilot.notification.newTestPilotResults"),
+	    l10n("testpilot.notification.newTestPilotResults.message",task.title),
+      l10n("testpilot.notification.newTestPilotResults"),
 	    "new-results", false, false,
-	    this._stringBundle.GetStringFromName("testpilot.moreInfo"),
+	    l10n("testpilot.moreInfo"),
 	    task.defaultUrl);
           // Having shown the notification, advance the status of the
           // results, so that this notification won't be shown again
@@ -647,10 +622,8 @@ let TestPilotSetup = {
         if (!this._isShowingUpdateNotification()) {
           this._showNotification(
 	    null, false,
-	    this._stringBundle.GetStringFromName(
-	      "testpilot.notification.extensionUpdate.message"),
-	    this._stringBundle.GetStringFromName(
-	      "testpilot.notification.extensionUpdate"),
+	    l10n("testpilot.notification.extensionUpdate.message"),
+	    l10n("testpilot.notification.extensionUpdate"),
 	    "update-extension", true, false, "", "", true);
 	}
         callback(false);
