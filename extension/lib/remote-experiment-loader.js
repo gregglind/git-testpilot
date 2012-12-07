@@ -6,10 +6,11 @@ const PREFBASE = "extensions." + require('self').id + "."
 const BASE_URL_PREF = PREFBASE + "indexBaseURL";
 const SSL_DOWNLOAD_REQUIRED_PREF = PREFBASE + "ssldownloadrequired";
 
+let {Cc,Ci} = require('chrome')
+var {URL} = require('sdk/url');
+// NOTE:  wants to be a string, so we can call length on it!
+var resolveUrl = function(base,relative) ""+URL(relative, base) // reverse args
 
-var Cuddlefish = require("oldsdk/cuddlefish");
-var resolveUrl = require("url").resolve;
-var SecurableModule = require("oldsdk/securable-module");
 let JarStore = require("jar-code-store").JarStore;
 let prefs = require("preferences-service");
 let myprefs = require("simple-prefs").prefs;
@@ -91,6 +92,7 @@ function verifyChannelSecurity(channel) {
 function downloadFile(url, cb, lastModified) {
   // lastModified is a timestamp (ms since epoch); if provided, then the file
   // will not be downloaded unless it is newer than this.
+  console.log("ABOUT TO GET:", url)
   var req = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
               .createInstance( Ci.nsIXMLHttpRequest );
   req.open('GET', url, true);
@@ -99,12 +101,14 @@ function downloadFile(url, cb, lastModified) {
     d.setTime(lastModified);
     // example header: If-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT
     req.setRequestHeader("If-Modified-Since", d.toGMTString());
-    console.info("Setting if-modified-since header to " + d.toGMTString());
+    console.info("Setting if-modified-since header to " + d.toGMTString(), url);
   }
   //Use binary mode to download jars TODO find a better switch
   if (url.indexOf(".jar") == url.length - 4) {
     console.info("Using binary mode to download jar file.");
     req.overrideMimeType('text/plain; charset=x-user-defined');
+  } else {
+    console.warn("NOT A JAR, really?", "|"+url+"|");
   }
   req.onreadystatechange = function(aEvt) {
     if (req.readyState == 4) {
@@ -137,7 +141,9 @@ function downloadFile(url, cb, lastModified) {
   req.send();
 }
 
-// example contents of extensions.testpilot.experiment.codeFs:
+exports.downloadFile = downloadFile;
+
+// example contents of experiment.codeFs:
 // {'fs': {"bookmark01/experiment": "<plain-text code @ bookmarks.js>"}}
 // sample code
     // example data:
@@ -164,34 +170,29 @@ exports.RemoteExperimentLoader.prototype = {
     this._logger.trace("About to instantiate jar store.");
     this._jarStore = new JarStore(require("self").id + "-" + myprefs['jarfiledir']);
     let self = this;
-    this._logger.trace("About to instantiate cuddlefish loader.");
+    this._logger.trace("About to instantiate loader.");
     this._refreshLoader();
     // set up the unloading
     require("unload").when( function() {
-                              self._loader.unload();
+                              require('toolkit/loader').unload(self._loader);
                             });
     this._logger.trace("Done instantiating remoteExperimentLoader.");
   },
 
   _refreshLoader: function() {
     if (this._loader) {
-      this._loader.unload();
+      require('toolkit/loader').unload(this._loader);
     }
-    /* Pass in "TestPilot.experiment" logger as the console object for
-     * all remote modules loaded through cuddlefish, so they will log their
+    /* TODO:  Pass in "TestPilot.experiment" logger as the console object for
+     * all remote modules loaded through loader, so they will log their
      * stuff to the same file as all other modules.  This logger is not
      * technically a console object but as long as it has .debug, .info,
      * .warn, and .error methods, it will work fine.*/
 
-    /* Use a composite file system here, compositing codeStorage and a new
-     * local file system so that securable modules loaded remotely can
-     * themselves require modules in the cuddlefish lib. */
     let self = this;
-    this._loader = Cuddlefish.Loader(
-      {fs: new SecurableModule.CompositeFileSystem(
-         [self._jarStore, Cuddlefish.parentLoader.fs]),
-       console: this._expLogger
-      });
+
+    // TODO, pull in the logger?
+    this._loader = require('tploader').tploader(this._jarStore.basedir.path);
 
     // Clear all of our lists of studies/surveys/results when refreshing loader
     this._studyResults = [];
@@ -278,21 +279,22 @@ exports.RemoteExperimentLoader.prototype = {
       this._logger.trace("I'm gonna go try to get the code for " + filename);
       let modDate = this._jarStore.getFileModifiedDate(filename);
 
+      console.log(this._baseURL,filename,resolveUrl(this._baseUrl, filename)+"||")
       this._fileGetter(resolveUrl(this._baseUrl, filename),
-      function onDone(code) {
-        // code will be non-null if there is actually new code to download.
-        if (code) {
-          self._logger.info("Downloaded jar file " + filename);
-          self._jarStore.saveJarFile(filename, code, hash);
-          self._logger.trace("Saved code for: " + filename);
-        } else {
-          self._logger.info("Nothing to download for " + filename);
-        }
-        numFilesToDload--;
-        if (numFilesToDload == 0) {
-          self._logger.trace("Calling callback.");
-          callback(true);
-        }
+        function onDone(code) {
+          // code will be non-null if there is actually new code to download.
+          if (code) {
+            self._logger.info("Downloaded jar file " + filename);
+            self._jarStore.saveJarFile(filename, code, hash);
+            self._logger.trace("Saved code for: " + filename);
+          } else {
+            self._logger.info("Nothing to download for " + filename);
+          }
+          numFilesToDload--;
+          if (numFilesToDload == 0) {
+            self._logger.trace("Calling callback.");
+            callback(true);
+          }
       }, modDate);
     }
   },
@@ -347,6 +349,7 @@ exports.RemoteExperimentLoader.prototype = {
 
   _cachedIndexNsiFile: null,
   get cachedIndexNsiFile() {
+    // TODO, this should go in the JAR STORE, rather than TestPilotExperimentFiles!
     if (!this._cachedIndexNsiFile) {
       try {
         let file = Cc["@mozilla.org/file/directory_service;1"].
@@ -479,14 +482,18 @@ exports.RemoteExperimentLoader.prototype = {
     /* Load up and return all studies/surveys (not libraries)
      * already stored in codeStorage.  Returns a dict with key =
      * the module name and value = the module object. */
+
     this._logger.trace("GetExperiments called.");
     let remoteExperiments = {};
     this._loadErrors = [];
     for each (filename in this._experimentFileNames) {
       this._logger.debug("GetExperiments is loading " + filename);
       try {
-        remoteExperiments[filename] = this._loader.require(filename);
-        this._logger.info("Loaded " + filename + " OK.");
+        // TODO, this is the actual experiment main loading here.
+        let path = this._jarStore.resolveModule(null,filename);
+        path = "jar:file://" + path // should be some sort of normalize fn.
+        remoteExperiments[filename] = require('toolkit/loader').main(this._loader,path);
+        this._logger.info("Loaded experiment" + filename + " OK.");
       } catch(e) {
         /* Turn the load-time errors into strings and store them, so we can display
          * them on a debug page or include them with a data upload!  (Don't store
