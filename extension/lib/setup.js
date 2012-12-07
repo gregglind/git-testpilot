@@ -55,7 +55,6 @@ let TestPilotSetup = {
         myprefs[key] = value;
       }
     }
-    return this.__loader;
   },
 
   __feedbackManager: null,
@@ -217,7 +216,6 @@ let TestPilotSetup = {
       self.taskList[i].onExperimentShutdown();
     }
     this.taskList = [];
-    this._loader.unload();
     this._obs.remove("testpilot:task:changed", this.onTaskStatusChanged, self);
     this._obs.remove(
       "testpilot:task:dataAutoSubmitted", this._onTaskDataAutoSubmitted, self);
@@ -796,8 +794,6 @@ let TestPilotSetup = {
     }
 
     this.taskList = [];
-    this._loader.unload();
-
     this.checkForTasks(callback);
   },
 
