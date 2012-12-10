@@ -123,7 +123,11 @@ let TestPilotSetup = {
     return observer
   },
 
-  globalStartup: function TPS__doGlobalSetup() {
+  globalStartup: function TPS__doGlobalSetup(options) {
+    options = options === undefined ? {} : options;
+    // TODO, change this to arg 'reason' from the addon bootstrap,
+    //   which would simplify down a lot.
+
     // Only ever run this stuff ONCE, on the first window restore.
     // Should get called by the Test Pilot component.
     let logger = this._logger;
@@ -144,6 +148,12 @@ let TestPilotSetup = {
     this._obs.add("quit-application", this.globalShutdown, self);
     // Set up observation for enter/exit private browsing:
     this._obs.add("private-browsing", this.onPrivateBrowsingMode, self);
+
+    if (options.noremoteloading) {
+      this.noremoteloading = true;
+      logger.trace("Don't set up timers for updating index.json or the like.  Manual tasks only");
+      return
+    }
 
     // Set up timers to remind user x minutes after startup
     // and once per day thereafter.  Use nsITimer so it doesn't belong to
