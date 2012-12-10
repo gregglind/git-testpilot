@@ -6,10 +6,12 @@ EXPORTED_SYMBOLS = ["TestPilotSetup", "POPUP_SHOW_ON_NEW",
                     "POPUP_SHOW_ON_FINISH", "POPUP_SHOW_ON_RESULTS",
                     "ALWAYS_SUBMIT_DATA", "RUN_AT_ALL_PREF"];
 
+const {Cc,Ci,Cu} = require("chrome");
+
 let l10n = require("l10n").get;
 let myprefs = require('simple-prefs').prefs;
 let observer = require("observer-service");
-const {Cc,Ci,Cu} = require("chrome");
+let { EventTarget, emit } = require('sdk/event/target');
 
 const EXTENSION_ID = require('self').id;
 const VERSION_PREF ="lastversion";
@@ -159,39 +161,49 @@ let TestPilotSetup = {
       { notify: function(timer) {
           self.reloadRemoteExperiments(function() {
             self._notifyUserOfTasks();
-	  });
-      }}, this._prefs.getValue(POPUP_REMINDER_INTERVAL, 86400000),
+	        });
+      }},
+      this._prefs.getValue(POPUP_REMINDER_INTERVAL, 86400000),
       Ci.nsITimer.TYPE_REPEATING_SLACK);
 
-      this.getVersion(function() {
-        /* Show first run page (in front window) only the first time after install;
-         * Don't show first run page in Feedback UI version. */
-        if ((self._prefs.getValue(VERSION_PREF, "") == "") &&
-           (!TestPilotUIBuilder.channelUsesFeedback())) {
-            self._prefs.setValue(VERSION_PREF, self.version);
-            let browser = self._getFrontBrowserWindow().getBrowser();
-            let url = self._prefs.getValue(FIRST_RUN_PREF, "");
-            let tab = browser.addTab(url);
-            browser.selectedTab = tab;
-        }
+    this.getVersion(function() {
+      /* Show first run page (in front window) only the first time after install;
+       * Don't show first run page in Feedback UI version. */
 
-        // Install tasks. (This requires knowing the version, so it is
-        // inside the callback from getVersion.)
-        self.checkForTasks(function() {
-          /* Callback to complete startup after we finish
-           * checking for tasks. */
-         self.startupComplete = true;
-         logger.trace("I'm in the callback from checkForTasks.");
-         // Send startup message to each task:
-         for (let i = 0; i < self.taskList.length; i++) {
-           self.taskList[i].onAppStartup();
-         }
-         self._obs.notify("testpilot:startup:complete", "", null);
-         /* onWindowLoad gets called once for each window,
-          * but only after we fire this notification. */
-         logger.trace("Testpilot startup complete.");
+      /*  TODO: FIRST RUN UX needs total rethinking here.
+       * current thought:  should be a noticebox on release
+         nothing on built-in aurora/beta
+         but this idea needs thinking.
+      if ((self._prefs.getValue(VERSION_PREF, "") == "") &&
+         (!TestPilotUIBuilder.channelUsesFeedback())) {
+          logger.trace("first startup on non-beta, so opening page");
+          // ie.., in non beta, aurora, etc.
+          self._prefs.setValue(VERSION_PREF, self.version);
+          let browser = self._getFrontBrowserWindow().getBrowser();
+          let url = self._prefs.getValue(FIRST_RUN_PREF, "");
+          let tab = browser.addTab(url);
+          browser.selectedTab = tab;
+      }
+      */
+
+      // Install tasks. (This requires knowing the version, so it is
+      // inside the callback from getVersion.)
+      self.checkForTasks(function() {
+        /* Callback to complete startup after we finish
+         * checking for tasks. */
+        self.startupComplete = true;
+        logger.trace("I'm in the callback from checkForTasks.");
+        // Send startup message to each task:
+        for (let i = 0; i < self.taskList.length; i++) {
+          self.taskList[i].onAppStartup();
+        }
+        self._obs.notify("testpilot:startup:complete", "", null);
+        /* onWindowLoad gets called once for each window,
+        * but only after we fire this notification. */
+        logger.trace("Testpilot startup complete.");
       });
     });
+
     } catch(e) {
       logger.error("Error in testPilot startup: " + e);
     }
@@ -269,153 +281,154 @@ let TestPilotSetup = {
     // TODO raise some kind of exception if a task with the same ID already
     // exists.  No excuse to ever be running two copies of the same task.
     this.taskList.push(testPilotTask);
+    this._logger.trace("taskList n=" + this.taskList.length);
   },
 
-  _showNotification: function TPS__showNotification(task, fragile, text, title,
-                                                    iconClass, showSubmit,
-						    showAlwaysSubmitCheckbox,
-                                                    linkText, linkUrl,
-						    isExtensionUpdate,
-                                                    onCloseCallback) {
-    /* TODO: Refactor the arguments of this function, it's getting really
-     * unweildly.... maybe pass in an object, or even make a notification an
-     * object that you create and then call .show() on. */
+  _showNotification: function TPS__showNotification(options){
+    let {task,
+        fragile,
+        text,
+        title,
+        iconClass,
+        showSubmit,
+        showAlwaysSubmitCheckbox,
+        linkText,
+        linkUrl,
+        isExtensionUpdate,
+        onCloseCallback}  = options;
 
-    // If there are multiple windows, show notifications in the frontmost
-    // window.
-    let window = this._getFrontBrowserWindow();
-    let doc = window.document;
-    let popup = doc.getElementById("pilot-notification-popup");
+    /** UX:  show multiple, persistent windows.  These are *really persistent*
+     *  and will show across tabs, untill dismissed.
+     */
 
-    let anchor, xOffset;
-    if (TestPilotUIBuilder.channelUsesFeedback()) {
-      /* If we're in the Ffx4Beta version, popups hang down from the feedback
-       * button. In the standalone extension version, they hang down from
-       * a temporary Test Pilot icon that appears in the toolbar. */
-      anchor = doc.getElementById("feedback-menu-button");
-      xOffset = 0;
-    } else {
-      anchor = doc.getElementById("tp-notification-popup-icon");
-      anchor.hidden = false;
-      /* By default, right edge of notification will line up with right edge of anchor.
-       * That looks fine for feedback button, but the test pilot icon is narrower and
-       * this alignment causes the pointy part of the arrow to miss the icon.  Fix this
-       * by shifting the notification to the right 24 pixels. */
-      xOffset = 24;
-    }
-    let textLabel = doc.getElementById("pilot-notification-text");
-    let titleLabel = doc.getElementById("pilot-notification-title");
-    let icon = doc.getElementById("pilot-notification-icon");
-    let submitBtn = doc.getElementById("pilot-notification-submit");
-    let closeBtn = doc.getElementById("pilot-notification-close");
-    let link = doc.getElementById("pilot-notification-link");
-    let alwaysSubmitCheckbox =
-      doc.getElementById("pilot-notification-always-submit-checkbox");
     let self = this;
 
-    // Set all appropriate attributes on popup:
-    if (isExtensionUpdate) {
-      popup.setAttribute("tpisextensionupdate", "true");
-    }
-    popup.setAttribute("noautohide", !fragile);
-    titleLabel.setAttribute("value", title);
-    while (textLabel.lastChild) {
-      textLabel.removeChild(textLabel.lastChild);
-    }
-    textLabel.appendChild(doc.createTextNode(text));
-    if (iconClass) {
-      // css will set the image url based on the class.
-      icon.setAttribute("class", iconClass);
-    }
+    // some default values:
+    submitLabel = l10n("testpilot.submit");
 
-    alwaysSubmitCheckbox.setAttribute("hidden", !showAlwaysSubmitCheckbox);
-    if (showSubmit) {
-      if (isExtensionUpdate) {
-        submitBtn.setAttribute("label", l10n("testpilot.notification.update"));
-	submitBtn.onclick = function() {
-          this._extensionUpdater.check(EXTENSION_ID);
-          self._hideNotification(window, onCloseCallback);
-	};
-      } else {
-        submitBtn.setAttribute("label",l10n("testpilot.submit"));
-        // Functionality for submit button:
-        submitBtn.onclick = function() {
-          self._hideNotification(window, onCloseCallback);
-          if (showAlwaysSubmitCheckbox && alwaysSubmitCheckbox.checked) {
-            self._prefs.setValue(ALWAYS_SUBMIT_DATA, true);
-          }
-          task.upload( function(success) {
-            if (success) {
-              self._showNotification(
-		task, true,
-                l10n("testpilot.notification.thankYouForUploadingData.message"),
-                l10n("testpilot.notification.thankYouForUploadingData"),
-		"study-submitted", false, false,
-                l10n("testpilot.moreInfo"),
-		task.defaultUrl);
-            } else {
-              // TODO any point in showing an error message here?
-            }
-          });
-        };
-      }
-    }
-    submitBtn.setAttribute("hidden", !showSubmit);
+    let {anchorit} = require("interface");
+    // decide where to anchor.
+    let anchor = anchorit(["tp-notification-popup-icon", // TP icon (TBD)
+      "feedback-menu-button", // Aurora / Beta, feedback enabled
+      "home-button" // Fallback, home button.
+     ]);
 
-    // Create the link if specified:
-    if (linkText && (linkUrl || task)) {
-      link.setAttribute("value", linkText);
-      link.onclick = function(event) {
-        if (event.button == 0) {
-	  if (task) {
-            task.loadPage();
-	  } else {
-            switchtab(linkUrl);
-	  }
-          self._hideNotification(window, onCloseCallback);
+    /** new way, but hackish... general tp dialogue, pass in the
+     *  customization data as a message.
+     *  very tied to the desktop implementation, right now.
+     */
+
+    let target = EventTarget({
+        // onX is ties the dialog onto actionX
+        'onClose': function(data){
+            console.log("Target got data:", JSON.stringify(data));
+        },
+        'onYes': function(data){
+            notice.destroy();
+        },
+        'onNo': function(data){
+            console.log("BURN IN HECK!");
+            notice.destroy();
         }
-      };
-      link.setAttribute("hidden", false);
-    } else {
-      link.setAttribute("hidden", true);
+    });
+
+    /** Customize notfication callback actions
+      * for each of the many kinds of notictes
+      * we can trigger
+      */
+
+
+    // TODO, move these functions somewhere useful
+
+    let submit_checkupdate = function(){
+      this._extensionUpdater.check(EXTENSION_ID);
+      notice.destroy();
     }
 
-    closeBtn.onclick = function() {
-      self._hideNotification(window, onCloseCallback);
+    // TODO is submit always a check box?  A button?
+    let submit_always = function(){
+      self._prefs.setValue(ALWAYS_SUBMIT_DATA, true);
+      submit_regular();
     };
 
-    // Show the popup:
-    popup.hidden = false;
-    popup.setAttribute("open", "true");
-    popup.openPopup( anchor, "after_end", xOffset, 0);
+    let submit_regular = function(){
+      // if (showAlwaysSubmitCheckbox && alwaysSubmitCheckbox.checked) {
+      notice.destroy();
+      task.upload( function(success) {
+        if (success) {
+          // NOTICE:  upload-success
+          self._showNotification({
+            task:task,
+            fragile:true,
+            text: l10n("testpilot.notification.thankYouForUploadingData.message"),
+            title: l10n("testpilot.notification.thankYouForUploadingData"),
+            iconClass: "study-submitted",
+            showSubmit: false,
+            showAlwaysSubmitCheckbox: false,
+            linkText: l10n("testpilot.moreInfo"),
+            linkUrl:  task.defaultUrl});
+        } else {
+          // TODO any point in showing an error message here?
+        }
+      });
+    };
+
+    if (linkText && (linkUrl || task)) {
+      let Yes_function = function(){
+        task ? task.loadPage() : switchtab(linkUrl);
+        notice.destroy();
+      }
+      target.on('yes',Yes_function);
+    };
+
+    if (showSubmit) {
+      if (isExtensionUpdate) {
+        submitLabel = l10n("testpilot.notification.update");
+        target.on("submit",submit_checkupdate);
+      } else {  // by far the commoner case
+        submitLabel = l10n("testpilot.submit");
+        // Functionality for submit button:
+        target.on("submit",submit_regular);
+      }
+    };
+
+    // Set all appropriate attributes on popup: // TODO, how to handle tp update case?
+    if (isExtensionUpdate) {
+      //popup.setAttribute("tpisextensionupdate", "true");
+    }
+
+    let noticecustomizations = {
+        text:text,
+        title:title,
+        iconClass: iconClass,
+        showSubmit: showSubmit,
+        submitLabel:  submitLabel,
+        showAlwaysSubmitCheckbox: showAlwaysSubmitCheckbox,
+        linkText: linkText,
+        linkUrl: linkUrl,
+    };
+
+    // tie notice box to target, for callbacks
+    let notice = require("interface").tpdialogue(target);
+    notice.port.on("jqready", function() {
+        console.log('got ready');
+        options = {fragile: fragile}
+        notice.port.emit("customize",noticecustomizations);  // behind the scenes
+        console.log("emitted!");
+        onClose:  onCloseCallback // TODO need re-arch to have 'good' vs. 'bad' close
+    });
+    notice.show(anchor,{persistent:!fragile});  // show it
+
+
+
   },
 
-  _hideNotification: function TPS__hideNotification(window, onCloseCallback) {
-    /* Note - we take window as an argument instead of just using the frontmost
-     * window because the window order might have changed since the notification
-     * appeared and we want to be sure we close the notification in the same
-     * window as we opened it in! */
-    let popup = window.document.getElementById("pilot-notification-popup");
-    popup.hidden = true;
-    popup.setAttribute("open", "false");
-    popup.removeAttribute("tpisextensionupdate");
-    popup.hidePopup();
-
-    if (!TestPilotUIBuilder.channelUsesFeedback()) {
-      // If we're using the temporary test pilot icon as an anchor, hide it now
-      let icon = window.document.getElementById("tp-notification-popup-icon");
-      icon.hidden = true;
-    }
-    if (onCloseCallback) {
-      onCloseCallback();
-    }
-  },
 
   _isShowingUpdateNotification : function() {
     let window = this._getFrontBrowserWindow();
     let popup = window.document.getElementById("pilot-notification-popup");
 
-    return popup.hasAttribute("tpisextensionupdate");
+    return popup && popup.hasAttribute("tpisextensionupdate");
   },
 
   _notifyUserOfTasks: function TPS__notifyUser() {
@@ -429,19 +442,26 @@ let TestPilotSetup = {
       return;
     }
 
+    this._logger.trace("_notifyUserOfTasks: finished tests?");
     // Highest priority is if there is a finished test (needs a decision)
     if (this._prefs.getValue(POPUP_SHOW_ON_FINISH, false)) {
       for (let i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
         if (task.status == TaskConstants.STATUS_FINISHED) {
           if (!this._prefs.getValue(ALWAYS_SUBMIT_DATA, false)) {
-            this._showNotification(
-	      task, false,
-	      l10n("testpilot.notification.readyToSubmit.message", task.title),
-	      l10n("testpilot.notification.readyToSubmit"),
-	      "study-finished", true, true,
-	      l10n("testpilot.moreInfo"),
-	      task.defaultUrl);
+            // NOTICE:  ready to submit
+            this._showNotification({
+                task: task,
+                fragile: false,
+                text: l10n("testpilot.notification.readyToSubmit.message", task.title),
+                title: l10n("testpilot.notification.readyToSubmit"),
+                iconClass:  "study-finished",
+                showSubmit: true,
+                showAlwaysSubmitCheckbox: true,
+                linkText:  l10n("testpilot.moreInfo"),
+                linkUrl:  task.defaultUrl
+            }
+	      );
             // We return after showing something, because it only makes
             // sense to show one notification at a time!
             return;
@@ -450,62 +470,85 @@ let TestPilotSetup = {
       }
     }
 
+    this._logger.trace("_notifyUserOfTasks: new tests?");
     // If there's no finished test, next highest priority is new tests that
     // are starting...
     if (this._prefs.getValue(POPUP_SHOW_ON_NEW, false)) {
+      this._logger.trace("There are new tasks: " + this.taskList.length)
       for (let i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
+        this._logger.trace("task ["+i+"]" + JSON.stringify({status: task.status, title: task.title,taskType: task.taskType}))
         if (task.status == TaskConstants.STATUS_PENDING ||
             task.status == TaskConstants.STATUS_NEW) {
           if (task.taskType == TaskConstants.TYPE_EXPERIMENT) {
-	    this._showNotification(
-	      task, false,
-	      l10n("testpilot.notification.newTestPilotStudy.pre.message",task.title),
-	      l10n("testpilot.notification.newTestPilotStudy"),
-	      "new-study", false, false,
-	      l10n("testpilot.moreInfo"),
-	      task.defaultUrl, false, function() {
-                /* on close callback (Bug 575767) -- when the "new study
-                 * starting" popup is dismissed, then the study can start. */
-                task.changeStatus(TaskConstants.STATUS_STARTING, true);
-                TestPilotSetup.reloadRemoteExperiments();
-              });
-            return;
-          } else if (task.taskType == TaskConstants.TYPE_SURVEY) {
-	    this._showNotification(
-	      task, false,
-        l10n("testpilot.notification.newTestPilotSurvey.message",task.summary || task.title),
-          // in task.js summary falls back to title if undefined or empty, but we double make sure :)
+            this._logger.trace("WANT to show:", task.title);
+	    this._showNotification({
+              // NOTICE: about to launch study
+              task: task,
+              fragile: false,
+              text: l10n("testpilot.notification.newTestPilotStudy.pre.message",task.title),
+              title: l10n("testpilot.notification.newTestPilotStudy"),
+              iconClass: "new-study",
+              showSubmit: false,
+              showAlwaysSubmitCheckbox: false,
+              linkText: l10n("testpilot.moreInfo"),
+              linkUrl: task.defaultUrl,
+              isExtensionUpdate: false,
+              // TODO, this needs some thinking.  Clearly 'go on any close' isn't right.
+              onCloseCallback: function() {
+                    /* on close callback (Bug 575767) -- when the "new study
+                     * starting" popup is dismissed, then the study can start. */
+                    task.changeStatus(TaskConstants.STATUS_STARTING, true);
+                    console.log('starting experiment!');
+                    TestPilotSetup.reloadRemoteExperiments();
+                  }
+              })
+              return;
+            } else if (task.taskType == TaskConstants.TYPE_SURVEY) {
+              // NOTICE:  about to launch survey
+              this._showNotification({
+                task: task,
+                fragile: false,
+                text: l10n("testpilot.notification.newTestPilotSurvey.message",task.summary || task.title),
+                  // in task.js summary falls back to title if undefined or empty, but we double make sure :)
 
-        l10n("testpilot.notification.newTestPilotSurvey"),
-        "new-survey",
-	      false, false,
-        l10n("testpilot.takeSurvey"),
-	      task.defaultUrl);
-            task.changeStatus(TaskConstants.STATUS_IN_PROGRESS, true);
-            return;
+                title: l10n("testpilot.notification.newTestPilotSurvey"),
+                iconClass: "new-survey",
+                showSubmit: false,
+                showAlwaysSubmitCheckbox: false,
+                linkText: l10n("testpilot.takeSurvey"),
+                linkUrl: task.defaultUrl}
+              );
+
+              task.changeStatus(TaskConstants.STATUS_IN_PROGRESS, true);
+              return;
+            }
           }
         }
-      }
     }
 
+    this._logger.trace("_notifyUserOfTasks: new results?");
     // And finally, new experiment results:
     if (this._prefs.getValue(POPUP_SHOW_ON_RESULTS, false)) {
       for (let i = 0; i < this.taskList.length; i++) {
         task = this.taskList[i];
         if (task.taskType == TaskConstants.TYPE_RESULTS &&
             task.status == TaskConstants.STATUS_NEW) {
-	  this._showNotification(
-	    task, true,
-	    l10n("testpilot.notification.newTestPilotResults.message",task.title),
-      l10n("testpilot.notification.newTestPilotResults"),
-	    "new-results", false, false,
-	    l10n("testpilot.moreInfo"),
-	    task.defaultUrl);
-          // Having shown the notification, advance the status of the
-          // results, so that this notification won't be shown again
-          task.changeStatus(TaskConstants.STATUS_ARCHIVED, true);
-          return;
+              // NOTICE:  new results (which we mostly don't use!)
+              this._showNotification({
+                task: task,
+                fragile: true,
+                text: l10n("testpilot.notification.newTestPilotResults.message",task.title),
+                title: l10n("testpilot.notification.newTestPilotResults"),
+                iconClass:"new-results",
+                showSubmit: false,
+                showAlwaysSubmitCheckbox: false,
+                linkText: l10n("testpilot.moreInfo"),
+                linkUrl:  task.defaultUrl});
+              // Having shown the notification, advance the status of the
+              // results, so that this notification won't be shown again
+              task.changeStatus(TaskConstants.STATUS_ARCHIVED, true);
+              return;
         }
       }
     }
@@ -530,16 +573,17 @@ let TestPilotSetup = {
   },
 
   _onTaskDataAutoSubmitted: function(subject, data) {
-    this._showNotification(
-      subject, true,
-      this._stringBundle.formatStringFromName(
-	"testpilot.notification.autoUploadedData.message",
-	[subject.title], 1),
-      this._stringBundle.GetStringFromName(
-	"testpilot.notification.autoUploadedData"),
-      "study-submitted", false, false,
-      this._stringBundle.GetStringFromName("testpilot.moreInfo"),
-      subject.defaultUrl);
+    // Notice, task auto submit.
+    this._showNotification({
+      task: subject,
+      fragile: true,
+      text: l10n("testpilot.notification.autoUploadedData.message",subject.title),
+      title: l10n("testpilot.notification.autoUploadedData"),
+      iconClass: "study-submitted",
+      showSubmit: false,
+      showAlwaysSubmitCheckbox: false,
+      linkText: l10n("testpilot.moreInfo"),
+      linkUrl: subject.defaultUrl });
   },
 
   getVersion: function TPS_getVersion(callback) {
@@ -615,12 +659,19 @@ let TestPilotSetup = {
 
         // Let user know there is a newer version of Test Pilot available:
         if (!this._isShowingUpdateNotification()) {
-          this._showNotification(
-	    null, false,
-	    l10n("testpilot.notification.extensionUpdate.message"),
-	    l10n("testpilot.notification.extensionUpdate"),
-	    "update-extension", true, false, "", "", true);
-	}
+          this._showNotification({
+            // Notice: extension update
+            task: null,
+            fragile: false,
+            text: l10n("testpilot.notification.extensionUpdate.message"),
+	          title: l10n("testpilot.notification.extensionUpdate"),
+	          iconClass: "update-extension",
+            showSubmit: true,
+            showAlwaysSubmitCheckbox: false,
+            linkText: "",
+            linkUrl: "",
+            isExtensionUpdate: true});
+	      }
         callback(false);
         return;
       }
@@ -668,15 +719,14 @@ let TestPilotSetup = {
       logger.warn("Error in requirements check " +  e);
       callback(false); // if something went wrong, err on the side of not running the study
     }
+    logger.trace("requirements passed");
     callback(true);
   },
 
   checkForTasks: function TPS_checkForTasks(callback) {
     let logger = this._logger;
     if (! this._remoteExperimentLoader ) {
-      logger.trace("Now requiring remote experiment loader:");
-      let remoteLoaderModule = this._loader.require("remote-experiment-loader");
-      logger.trace("Now instantiating remoteExperimentLoader:");
+      let remoteLoaderModule = require("remote-experiment-loader");
       let rel = new remoteLoaderModule.RemoteExperimentLoader(this._logRepo);
       this._remoteExperimentLoader = rel;
     }
@@ -689,9 +739,11 @@ let TestPilotSetup = {
         // downloading new contents or not...
         let experiments = self._remoteExperimentLoader.getExperiments();
 
+        // experiments is {somename:  module/main/sandbox?}
         let numExperimentsProcessed = 0;
         let numExperiments = Object.keys(experiments).length;
         for (let filename in experiments) {
+          logger.trace("_remoteExperimentLoader.checkForUpdates", filename)
           self._checkExperimentRequirements(experiments[filename], function(requirementsMet) {
             if (requirementsMet) {
               try {
