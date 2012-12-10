@@ -726,6 +726,34 @@ let TestPilotSetup = {
     callback(true);
   },
 
+  makeExperimentOrSurvey:  function TPS_makeExperimentOrSurvey(moduleObj){
+    let self = this;
+    let logger = this._logger;
+     // Could be a survey: check if surveyInfo is exported:
+    if (moduleObj.surveyInfo != undefined) {
+      let sInfo = moduleObj.surveyInfo;
+      // If it supplies questions, it's a built-in survey.
+      // If not, it's a web-based survey.
+      if (!sInfo.surveyQuestions) {
+        task = new self._taskModule.TestPilotWebSurvey(sInfo);
+      } else {
+        task = new self._taskModule.TestPilotBuiltinSurvey(sInfo);
+      }
+    } else {
+      // This one must be an experiment.
+      let expInfo = moduleObj.experimentInfo;
+      let dsInfo = moduleObj.dataStoreInfo;
+      let dataStore = new self._dataStoreModule.ExperimentDataStore(
+        dsInfo.fileName, dsInfo.tableName, dsInfo.columns );
+      let webContent = moduleObj.webContent;
+      task = new self._taskModule.TestPilotExperiment(expInfo,
+                                                      dataStore,
+                                                      moduleObj.handlers,
+                                                      webContent);
+    }
+    return task;
+  },
+
   checkForTasks: function TPS_checkForTasks(callback) {
     let logger = this._logger;
     if (! this._remoteExperimentLoader ) {
@@ -753,29 +781,7 @@ let TestPilotSetup = {
                 /* The try-catch ensures that if something goes wrong in loading one
                  * experiment, the other experiments after that one still get loaded. */
                 logger.trace("Attempting to load experiment " + filename);
-                let task;
-                // Could be a survey: check if surveyInfo is exported:
-                if (experiments[filename].surveyInfo != undefined) {
-                  let sInfo = experiments[filename].surveyInfo;
-                  // If it supplies questions, it's a built-in survey.
-                  // If not, it's a web-based survey.
-                  if (!sInfo.surveyQuestions) {
-                    task = new self._taskModule.TestPilotWebSurvey(sInfo);
-                  } else {
-                    task = new self._taskModule.TestPilotBuiltinSurvey(sInfo);
-                  }
-                } else {
-                  // This one must be an experiment.
-                  let expInfo = experiments[filename].experimentInfo;
-                  let dsInfo = experiments[filename].dataStoreInfo;
-                  let dataStore = new self._dataStoreModule.ExperimentDataStore(
-                    dsInfo.fileName, dsInfo.tableName, dsInfo.columns );
-                  let webContent = experiments[filename].webContent;
-                  task = new self._taskModule.TestPilotExperiment(expInfo,
-                                                                  dataStore,
-                                                                  experiments[filename].handlers,
-                                                                  webContent);
-                }
+                let task = this.makeExperimentOrSurvey(experiments['filename']);
                 self.addTask(task);
                 logger.info("Loaded task " + filename);
               } catch (e) {
