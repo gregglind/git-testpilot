@@ -8,6 +8,7 @@ EXPORTED_SYMBOLS = ["TaskConstants", "TestPilotBuiltinSurvey",
 
 const {Cc,Ci} = require("chrome");
 
+let {data} = require('self');
 let l10n = require('l10n').get;
 let observer = require("observer-service");
 let {MetadataCollector} = require("metadata.js");
@@ -40,7 +41,7 @@ const GUID_PREF_PREFIX = "taskGUID.";
 const RETRY_INTERVAL_PREF = "uploadRetryInterval";
 const TIME_FOR_DATA_DELETION = 7 * (24 * 60 * 60 * 1000); // 7 days
 const DATA_UPLOAD_PREF = "dataUploadURL";
-const DEFAULT_THUMBNAIL_URL = "chrome://testpilot/skin/badge-default.png";
+const DEFAULT_THUMBNAIL_URL = data.url("/skin/all/badge-default.png");
 
 
 const TaskConstants = {
