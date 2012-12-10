@@ -36,7 +36,7 @@ let TestPilotSetup = {
   _longTimer: null,
   _remoteExperimentLoader: null, // TODO make this a lazy initializer too?
   taskList: [],
-  version: "",
+  version: require('self').version,
 
   // Lazy initializers:
   __application: null,
@@ -587,19 +587,12 @@ let TestPilotSetup = {
   },
 
   getVersion: function TPS_getVersion(callback) {
+    // TODO, this is all moot in modern FX, just use require('self')
+
     // Application.extensions undefined in Firefox 4; will use the new
     // asynchrounous API, store string in this.version, and call the
     // callback when done.
-    if (this._application.extensions) {
-      this.version = this._application.extensions.get(EXTENSION_ID).version;
-      callback();
-    } else {
-      let self = this;
-      self._application.getExtensions(function(extensions) {
-        self.version = extensions.get(EXTENSION_ID).version;
-        callback();
-      });
-    }
+    callback()
   },
 
   _isNewerThanMe: function TPS__isNewerThanMe(versionString) {
