@@ -4,24 +4,69 @@
 <head>
 	<meta charset="utf-8">
     <title>Notification Window For Test Pilot</title>
+    <!-- <link rel="stylesheet" href="styles.css" />  todo -->
 </head>
 <body>
-<div><img src="skin/all/testpilot_32x32.png" /></div>
-<div id="title">Study Title</div>
-<div id="message">Message</div>
-<!-- this all needs li0n work -->
-<!-- should these be data-action -->
-<div><input type="button" data-action="takesurvey" value="Take Survey"></input></div>
-<div><input type="button" data-action="always" value="always"></input></div>
-<div><input type="button" data-action="submit" value="submit"></input></div>
-<div><input type="button" data-action="nosubmit" value="no"></input></div>
-<div><input type="button" data-action="close" value="close window"></input></div>
-<div id='output'></div>
+<div id="noticebox"></div>
 
+
+<script type="text/tempate" id='pilot-notification-template'>
+	<!-- css will set the image url based on the class. -->
+	<div><img class=<%= obj.iconClass %> src="skin/all/testpilot_32x32.png" /></div>
+	<h1 id="title"><%= obj.title %></h1>
+	<div id="text"><%= obj.text %></div>
+
+	<% if (obj.showSubmitAlwaysCheckbox) { %>
+		<div><input type="button" data-action="always" value="always"></input></div>
+	<% } %>
+	<% if (obj.showSubmit) { %>
+		<div><input type="button" data-action="submit" value="<%= obj.submitLabel %>"></input></div>
+	<% } %>
+	<% if (obj.linkText) { %>
+		<div><input type="button" data-action="yes" value="<%= obj.linkText %>"></input></div>
+	<% } %>
+
+	<div><input type="button" data-action="no" value="no"></input></div>
+	<div><input type="button" data-action="close" value="close window"></input></div>
+	<div id='output'></div>
+</script>
+
+<script type="text/javascript" src="underscore-min.js"></script>
 <script type="text/javascript" src="jquery.min.js"></script>
 <script type="text/javascript">
 
-$(function(){
+if (typeof(addon) === "undefined") {
+	var addon = {port:
+		{emit: function(what){
+			console.log("emit",what);
+		},
+		 on: function(what){
+		 	console.log("on",what);
+		 }
+	}}
+};
+
+function render(id, data){
+    var template = _.template($(id).html());
+    var s = template(data);
+    return s
+};
+
+$(function (){
+	addon.port.emit("jqready",{});
+});
+
+
+$(function (){
+	addon.port.on("customize",function(data){
+	//alert("got one!");
+	$('#noticebox').html(
+		render('#pilot-notification-template',data));
+	instrumentButtons();}
+)});
+
+
+var instrumentButtons = function(){
 	$(':button').click(function(evt){
 		var t = $(this);
 		var d = {id:t.attr('id'),name:t.attr('name'),data:t.data(),value:t.val()};
@@ -29,7 +74,10 @@ $(function(){
 		$('#output').append("<p>"+JSON.stringify(d)+"</p>")
 		addon.port.emit("action",d);
 	})
-})
+};
+
+
+//console.log(render('#pilot-notification-template',{title:"a title"}));
 </script>
 
 </body>

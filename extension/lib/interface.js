@@ -21,6 +21,7 @@ EXPORTED_SYMBOLS = ["TestPilotUIBuilder"];
 
 const { id, data } = require("self");
 const appname = require("xul-app").name;
+let { emit } = require('sdk/event/core');
 let tabs = require('tabs');
 
 //let {switchtab,banner,doorhanger,nbButtons:B,anchorit} = require("moz-ui");
@@ -194,27 +195,26 @@ exports.switchtab = function(options) {
 
 
 // TODO: should this take args about the task itself?
-let tpdialogue = function(){
+let tpdialogue = function(event_target){
   let mypanel = require("tppanel").Panel({
       width:  300,
       height: 300,
       contentURL:data.url('tp-browser-notification.html'),
       //onHide:  function(evt){mypanel.show()}
-  })
+  });
 
   // maybe this should live over on task / setup side?
   mypanel.port.on("action", function(data) {
     console.log('got action!');
     console.log(JSON.stringify(data));
 
+    if (!data.data.action) return
+
     switch (data.data.action) {
       case "close":
-          mypanel.destroy();
-          break;
-      case "takesurvey":
-          require("tabs").open("http://zooborns.com");
-          break;
+          mypanel.destroy();  // yes, fall through!
       default:
+          emit(event_target,data.data.action,data);
           break;
     }
   });

@@ -26,7 +26,7 @@ const { Symbiont } = require('sdk/content/content');
 const { EventEmitter } = require('sdk/deprecated/events');
 const timer = require('timers');
 const runtime = require('sdk/system/runtime');
-const { getMostRecentBrowserWindow } = require('sdk/window/utils');
+const { getMostRecentBrowserWindow } = require('window/utils');
 
 const windowMediator = Cc['@mozilla.org/appshell/window-mediator;1'].
                        getService(Ci.nsIWindowMediator);
@@ -120,6 +120,7 @@ const Panel = Symbiont.resolve({
   /* Public API: Panel.show */
   show: function show(anchor,options) {
     // tbd
+    options = options || {};
     let {where,styles,persistent} = options;
 
     anchor = anchor || null;
