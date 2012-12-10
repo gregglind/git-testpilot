@@ -49,6 +49,7 @@ function tploader(pathforfiles,options){
 		passed_modules["tabs"] = require("tabs")
 		passed_modules["timers"] = require("timers")
 		passed_modules['uuid'] = require("sdk/util/uuid");
+		passed_modules['unload'] = require("unload");
 		passed_modules["widget"] = require("widget")
 		passed_modules["windows"] = require("windows")
 		passed_modules["window/utils"] = require("window/utils")
@@ -67,7 +68,8 @@ function tploader(pathforfiles,options){
 	    paths: {
 	      "": "resource:///modules",
 	      '/': 'file:///',
-	      'jar':'jar',  // for rooted jar paths
+	      'file:': 'file:',  // for rooted files
+	      'jar:':'jar:',  // for rooted jar paths
 	 	  'FILES/': pathforfiles
 	    },
 	    resolve: resolve1
