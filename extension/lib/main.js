@@ -84,8 +84,6 @@ exports.main = function main(options,callback){
         contentURL: data.url("tp-browser-notification.html")
     });*/
 
-
-
     const { EventTarget } = require('sdk/event/target');
     let target = EventTarget({
         'onClose': function(data){
@@ -157,7 +155,7 @@ exports.main = function main(options,callback){
         ["about:config", //self.data.url("debug.html"),
           "about:addons",
           //self.data.url("welcome.html"),
-          myprefs["indexBaseURL"],
+          //myprefs["indexBaseURL"],
           pathFor('ProfD') + "/" + require("self").id + '-' + myprefs['jarfiledir'],
           "chrome://global/content/console.xul"].forEach(opentab);
     }
