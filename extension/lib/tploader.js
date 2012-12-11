@@ -1,6 +1,6 @@
 "use strict";
 
-let {Cc,Ci,Cr,Cs, component} = require("chrome");
+let {Cc,Ci,Cr,Cs,Cu, component} = require("chrome");
 
 let { Loader, Require, Sandbox, load, Module, main, resolveURI, resolve,
       unload, descriptor, override } = require('toolkit/loader')
@@ -60,6 +60,10 @@ function tploader(pathforfiles,options){
     }
 
     let mods = Mods();
+
+    // old compatibility
+    mods ["study_base_classes"] = require('./study_base_classes');
+
 	let loader = Loader({
 	    modules: mods,
 	    globals:{
@@ -80,6 +84,14 @@ function tploader(pathforfiles,options){
 	// Override globals to make `console` available, from gozala/scratch-kit:core.js
   	let globals = require('sdk/system/globals');
 	Object.defineProperties(loader.globals, descriptor(globals));
+
+	// for old compatibility
+	loader.globals.Cc = Cc;
+	loader.globals.Ci = Ci;
+	loader.globals.Cr = Cr;
+	loader.globals.Cs = Cs;
+	loader.globals.Cu = Cu;
+	loader.globals.Component = component;
 
 	return loader
 }
