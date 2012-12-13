@@ -1,6 +1,6 @@
 "use strict";
 
-let {Cc,Ci,Cr,Cs,Cu, component} = require("chrome");
+let {Cc,Ci,Cr,Cs,Cu, components} = require("chrome");
 
 let { Loader, Require, Sandbox, load, Module, main, resolveURI, resolve,
       unload, descriptor, override } = require('toolkit/loader')
@@ -91,7 +91,7 @@ function tploader(pathforfiles,options){
 	loader.globals.Cr = Cr;
 	loader.globals.Cs = Cs;
 	loader.globals.Cu = Cu;
-	loader.globals.Component = component;
+	loader.globals.Components = components;
 
 	return loader
 }
