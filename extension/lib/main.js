@@ -14,6 +14,7 @@ let helper_prefs = {
     "+popup.timeBetweenChecks": 60000, //used to be one day
     "+popup.showOnNewStudy": true,
     "+popup.showOnStudyFinished": true,
+    "+logtoconsole": true
 };
 
 let local_prefs = {
