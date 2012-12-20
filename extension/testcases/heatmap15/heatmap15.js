@@ -8,7 +8,11 @@ var BaseClasses = require("./study_base_classes.js");
 
 const ORIGINAL_TEST_ID = 101;
 const MY_TEST_ID = "heatmap15";
-const GUID_PREF_PREFIX = "extensions.testpilot.taskGUID.";
+
+var GUID_PREF_PREFIX = "extensions.testpilot.taskGUID.";
+if (typeof ADDONPREFPREFIX != 'undefined') {
+  GUID_PREF_PREFIX = ADDONPREFPREFIX + 'taskGUID.';
+}
 
 /* The multiple Firefox Beta 4 Interface Studies are longitudial.
  * The uploads need a shared GUID so we can match them up on the server.
