@@ -30,33 +30,35 @@ let resolve1 = function(id, requirer) {
  *
  */
 function tploader(pathforfiles,options){
-	// for now, options is empty, but should get 'extra_modules','overridden_paths', etc
+    // for now, options is empty, but should get 'extra_modules','overridden_paths', etc
 
-	pathforfiles = pathforfiles === undefined ?  uriFor('ProfD') : pathforfiles;
+    pathforfiles = pathforfiles === undefined ?  uriFor('ProfD') : pathforfiles;
 
     /**
       * modules callable by the experiement
       *
       */
     let Mods = function(){
-    	let passed_modules = {};
-    	// must be explicit for cfx manifest to find and link them!
-    	// https://addons.mozilla.org/en-US/developers/docs/sdk/latest/dev-guide/tutorials/chrome.html
-    	//passed_modules["testpilot"] = testpilotpseudo  // TODO
-		passed_modules["preferences-service"] = require("preferences-service")
-		passed_modules["request"] = require("request")
-		//passed_modules["selection"] = require("selection") // selection doesn't pass through correctly
-		passed_modules["tabs"] = require("tabs")
-		passed_modules["timers"] = require("timers")
-		passed_modules['uuid'] = require("sdk/util/uuid");
-		passed_modules['unload'] = require("unload");
-		passed_modules["widget"] = require("widget")
-		passed_modules["windows"] = require("windows")
-		passed_modules["window/utils"] = require("window/utils")
-		passed_modules["window-utils"] = require("window-utils")
-		passed_modules["xul-app"] = require("xul-app")
-		passed_modules["xpcom"] = require("xpcom")
-		return passed_modules
+        let passed_modules = {};
+        // must be explicit for cfx manifest to find and link them!
+        // https://addons.mozilla.org/en-US/developers/docs/sdk/latest/dev-guide/tutorials/chrome.html
+        //passed_modules["testpilot"] = testpilotpseudo  // TODO
+        passed_modules["file"] = require("file");
+        passed_modules["preferences-service"] = require("preferences-service")
+        passed_modules["request"] = require("request")
+        //passed_modules["selection"] = require("selection") // selection doesn't pass through correctly
+        passed_modules["tabs"] = require("tabs")
+        passed_modules["timers"] = require("timers");
+        passed_modules["url"] = require("url");
+        passed_modules['uuid'] = require("sdk/util/uuid");
+        passed_modules['unload'] = require("unload");
+        passed_modules["widget"] = require("widget")
+        passed_modules["windows"] = require("windows")
+        passed_modules["window/utils"] = require("window/utils")
+        passed_modules["window-utils"] = require("window-utils")
+        passed_modules["xul-app"] = require("xul-app")
+        passed_modules["xpcom"] = require("xpcom")
+        return passed_modules
     }
 
     let mods = Mods();
@@ -64,36 +66,38 @@ function tploader(pathforfiles,options){
     // old compatibility
     mods ["study_base_classes"] = require('./study_base_classes');
 
-	let loader = Loader({
-	    modules: mods,
-	    globals:{
-	    	ALLOWED: Object.keys(mods)
-	    },
-	    paths: {
-	      "": "resource:///modules",
-	      '/': 'file:///',
-	      'file:': 'file:',  // for rooted files
-	      'jar:':'jar:',  // for rooted jar paths
-	 	  'FILES/': pathforfiles
-	    },
-	    resolve: resolve1
-	  })
+    let loader = Loader({
+        modules: mods,
+        globals:{
+        ALLOWED: Object.keys(mods),
+        ADDONID: require('self').id,
+        ADDONPREFPREFIX:  'extensions.' + require('self').id + "."
+        },
+        paths: {
+          "": "resource:///modules",
+          '/': 'file:///',
+          'file:': 'file:',  // for rooted files
+          'jar:':'jar:',  // for rooted jar paths
+          'FILES/': pathforfiles
+        },
+        resolve: resolve1
+      })
 
-	console.log(JSON.stringify(loader.mapping,null,2));
+    console.log(JSON.stringify(loader.mapping,null,2));
 
-	// Override globals to make `console` available, from gozala/scratch-kit:core.js
-  	let globals = require('sdk/system/globals');
-	Object.defineProperties(loader.globals, descriptor(globals));
+    // Override globals to make `console` available, from gozala/scratch-kit:core.js
+    let globals = require('sdk/system/globals');
+    Object.defineProperties(loader.globals, descriptor(globals));
 
-	// for old compatibility
-	loader.globals.Cc = Cc;
-	loader.globals.Ci = Ci;
-	loader.globals.Cr = Cr;
-	loader.globals.Cs = Cs;
-	loader.globals.Cu = Cu;
-	loader.globals.Components = components;
+    // for old compatibility
+    loader.globals.Cc = Cc;
+    loader.globals.Ci = Ci;
+    loader.globals.Cr = Cr;
+    loader.globals.Cs = Cs;
+    loader.globals.Cu = Cu;
+    loader.globals.Components = components;
 
-	return loader
+    return loader
 }
 
 exports.tploader = tploader
